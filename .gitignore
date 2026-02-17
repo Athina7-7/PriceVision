@@ -1,0 +1,19 @@
+# Node
+node_modules/
+frontend/pricevision-ui/.angular/
+frontend/pricevision-ui/dist/
+frontend/pricevision-ui/coverage/
+
+# .NET
+**/bin/
+**/obj/
+
+# IDE
+.vscode/
+.idea/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db

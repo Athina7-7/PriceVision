@@ -1,0 +1,31 @@
+<main class="container">
+  <h1>{{ title }}</h1>
+  <p class="subtitle">Conexión Frontend ? Backend activa</p>
+
+  <section *ngIf="loading" class="status">Cargando datos del backend...</section>
+  <section *ngIf="error" class="status error">{{ error }}</section>
+
+  <section *ngIf="!loading && !error">
+    <h2>WeatherForecast API</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Temp (C)</th>
+          <th>Temp (F)</th>
+          <th>Resumen</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of forecasts">
+          <td>{{ item.date }}</td>
+          <td>{{ item.temperatureC }}</td>
+          <td>{{ item.temperatureF }}</td>
+          <td>{{ item.summary ?? '-' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<router-outlet />
