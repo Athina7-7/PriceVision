@@ -10,4 +10,9 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PriceVision.Application\PriceVision.Application.csproj" />
+    <ProjectReference Include="..\PriceVision.Infrastructure\PriceVision.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

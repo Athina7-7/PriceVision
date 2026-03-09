@@ -1,9 +1,13 @@
-// Es el equivalente al "main()" en otros lenguajes
+using PriceVision.Application.Abstractions;
+using PriceVision.Application.Contracts;
+using PriceVision.Infrastructure;
+using PriceVision.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var corsPolicyName = "AllowFrontend";
 builder.Services.AddCors(options =>
@@ -23,34 +27,71 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<PriceVisionDbContext>();
+    dbContext.Database.EnsureCreated();
+}
+
 app.UseCors(corsPolicyName);
 app.UseHttpsRedirection();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }))
    .WithName("HealthCheck");
 
-var summaries = new[]
+app.MapPost("/api/predictions/train", (TrainModelRequest? request, IModelTrainingService trainingService) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    var rows = request?.Rows ?? 3000;
+    var result = trainingService.Train(rows);
 
-app.MapGet("/api/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast(
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-
-    return Results.Ok(forecast);
+    return Results.Ok(result);
 })
-.WithName("GetWeatherForecast");
+.WithName("TrainPredictionModel");
+
+app.MapPost("/api/predictions", async (PredictionRequest request, IPredictiveModelService predictiveModelService, IPredictionRepository repository, CancellationToken cancellationToken) =>
+{
+    if (request.AreaM2 <= 0)
+    {
+        return Results.BadRequest(new { error = "AreaM2 debe ser mayor que cero." });
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Type) || string.IsNullOrWhiteSpace(request.Location))
+    {
+        return Results.BadRequest(new { error = "Type y Location son obligatorios." });
+    }
+
+    PredictionResult prediction;
+    try
+    {
+        prediction = predictiveModelService.Predict(request);
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+
+    var predictionEntity = predictiveModelService.BuildPredictionEntity(request, prediction);
+    await repository.AddAsync(predictionEntity, cancellationToken);
+
+    return Results.Ok(prediction);
+})
+.WithName("CreatePrediction");
+
+app.MapGet("/api/predictions/{id:guid}", async (Guid id, IPredictionRepository repository, CancellationToken cancellationToken) =>
+{
+    var prediction = await repository.GetByIdAsync(id, cancellationToken);
+    return prediction is null ? Results.NotFound() : Results.Ok(prediction);
+})
+.WithName("GetPredictionById");
+
+app.MapGet("/api/predictions", async (int? take, IPredictionRepository repository, CancellationToken cancellationToken) =>
+{
+    var limit = Math.Clamp(take ?? 20, 1, 100);
+    var predictions = await repository.GetRecentAsync(limit, cancellationToken);
+    return Results.Ok(predictions);
+})
+.WithName("GetRecentPredictions");
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+public sealed record TrainModelRequest(int Rows);
