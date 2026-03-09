@@ -1,3 +1,5 @@
+// Es el equivalente al "main()" en otros lenguajes
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
