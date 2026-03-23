@@ -1,162 +1,239 @@
 # PriceVision
 
-Proyecto con arquitectura separada en `frontend` (Angular) y `backend` (.NET 10) para estimación de recursos en proyectos de construcción.
+Aplicacion con arquitectura separada en `frontend` (Angular 17) y `backend` (.NET 10) para registrar proyectos de construccion, generar predicciones de recursos y costo financiero, y calcular indicadores EVM.
 
-## Estructura de carpetas y archivos
+## Estado actual
+
+La app hoy trabaja con este flujo:
+
+1. Registrar proyecto
+2. Ejecutar predicciones por proyecto
+3. Generar prediccion financiera
+4. Calcular EVM
+5. Consultar recientes e historial
+
+Ya no se usa un `ProjectId` escrito manualmente como flujo principal. Primero se registra un proyecto y luego se selecciona desde listados en los modulos de `Predicciones` y `EVM`.
+
+## Funcionalidades implementadas
+
+### 1. Registro de proyectos
+
+Permite guardar un proyecto con:
+
+- nombre
+- area en m2
+- ubicacion
+- tipo de proyecto
+- duracion estimada en meses
+- costos base en COP
+
+Incluye:
+
+- validaciones obligatorias en frontend y backend
+- persistencia en SQLite
+- advertencias no bloqueantes basadas en historicos
+
+### 2. Predicciones de recursos
+
+El sistema usa ML.NET para estimar:
+
+- cantidad de materiales
+- horas de mano de obra
+
+Caracteristicas actuales:
+
+- los modelos se entrenan con dataset sintetico generado por la aplicacion
+- el usuario puede aplicar solo materiales, solo mano de obra, o completar el modelo faltante en un proyecto
+- no se repite una prediccion ya realizada para el mismo tipo de modelo
+- la vista muestra detalle de la prediccion y recientes
+
+### 3. Prediccion financiera
+
+Ademas del modelo de recursos, la app incluye una prediccion financiera asociada al proyecto.
+
+Esta prediccion considera:
+
+- recursos estimados
+- costos historicos almacenados
+- tendencia por ubicacion
+
+Muestra:
+
+- costo total estimado
+- rango minimo y maximo
+- nivel de confianza en porcentaje
+- clasificacion de confianza (`Alto`, `Medio`, `Bajo`)
+
+### 4. EVM
+
+La app calcula indicadores de Earned Value Management:
+
+- `PV`: Planned Value
+- `EV`: Earned Value
+- `AC`: Actual Cost
+- `CPI`: Cost Performance Index
+- `SPI`: Schedule Performance Index
+
+Comportamiento actual:
+
+- EVM se calcula por proyecto seleccionado
+- requiere que el proyecto tenga predicciones de materiales y mano de obra
+- no permite recalcular EVM si ya existe un registro para el proyecto
+- muestra detalle y recientes en una vista dedicada
+
+### 5. Historial y recientes
+
+El sistema expone y muestra:
+
+- historial del proyecto
+- predicciones recientes
+- predicciones financieras recientes
+- EVM recientes
+
+Cada detalle incluye informacion del proyecto:
+
+- nombre
+- area
+- tipo
+- ubicacion
+- duracion
+- costo base
+
+## Arquitectura
 
 ```text
 PriceVision/
-├─ backend/
-│  ├─ PriceVision.slnx
-│  ├─ PriceVision.Api/
-│  │  ├─ Program.cs
-│  │  ├─ PriceVision.Api.csproj
-│  │  ├─ appsettings.json
-│  │  ├─ appsettings.Development.json
-│  │  ├─ PriceVision.Api.http
-│  │  ├─ Properties/
-│  │  │  └─ launchSettings.json
-│  │  ├─ Artifacts/
-│  │  │  ├─ synthetic-training-data.csv
-│  │  │  ├─ materials-model.zip
-│  │  │  ├─ labor-model.zip
-│  │  │  └─ model-version.txt
-│  │  └─ pricevision.db
-│  ├─ PriceVision.Domain/
-│  │  ├─ PriceVision.Domain.csproj
-│  │  └─ Entities/
-│  │     └─ Prediction.cs
-│  ├─ PriceVision.Application/
-│  │  ├─ PriceVision.Application.csproj
-│  │  ├─ Abstractions/
-│  │  │  ├─ IModelTrainingService.cs
-│  │  │  ├─ IPredictiveModelService.cs
-│  │  │  └─ IPredictionRepository.cs
-│  │  └─ Contracts/
-│  │     ├─ PredictionRequest.cs
-│  │     ├─ MaterialsEstimate.cs
-│  │     ├─ PredictionResult.cs
-│  │     └─ TrainingResult.cs
-│  └─ PriceVision.Infrastructure/
-│     ├─ PriceVision.Infrastructure.csproj
-│     ├─ DependencyInjection.cs
-│     ├─ Ml/
-│     │  ├─ SyntheticDatasetGenerator.cs
-│     │  ├─ ModelTrainingService.cs
-│     │  ├─ PredictiveModelService.cs
-│     │  ├─ PredictionTrainingRow.cs
-│     │  ├─ PredictionInputModel.cs
-│     │  └─ RegressionPrediction.cs
-│     └─ Persistence/
-│        ├─ PriceVisionDbContext.cs
-│        └─ PredictionRepository.cs
-├─ frontend/
-│  └─ pricevision-ui/
-│     ├─ angular.json
-│     ├─ package.json
-│     ├─ proxy.conf.json
-│     ├─ server.ts
-│     ├─ src/
-│     │  ├─ main.ts
-│     │  ├─ index.html
-│     │  ├─ styles.scss
-│     │  ├─ environments/
-│     │  │  └─ environment.ts
-│     │  └─ app/
-│     │     ├─ app.component.ts
-│     │     ├─ app.component.html
-│     │     ├─ app.component.scss
-│     │     ├─ app.routes.ts
-│     │     ├─ app.config.ts
-│     │     ├─ app.config.server.ts
-│     │     └─ core/services/api.service.ts
-│     └─ README.md
-└─ .gitignore
+|-- backend/
+|   |-- PriceVision.Api/
+|   |   |-- Program.cs
+|   |   |-- appsettings.json
+|   |   |-- Artifacts/
+|   |   `-- pricevision.db
+|   |-- PriceVision.Application/
+|   |   |-- Abstractions/
+|   |   `-- Contracts/
+|   |-- PriceVision.Domain/
+|   |   `-- Entities/
+|   `-- PriceVision.Infrastructure/
+|       |-- Forecasting/
+|       |-- Ml/
+|       |-- Persistence/
+|       `-- Validation/
+`-- frontend/
+    `-- pricevision-ui/
+        `-- src/app/
 ```
 
-## Cambios implementados para la HU #3
+## Persistencia
 
-Historia de usuario:
-`Como Project Manager quiero obtener una estimación automática de recursos para planificar materiales y mano de obra.`
+La base de datos actual es SQLite y se guarda en:
 
-### 1) Modelo de regresión en C#
+- `backend/PriceVision.Api/pricevision.db`
 
-Se implementó en `Infrastructure/Ml` con ML.NET:
+### Tablas principales
 
-- `ModelTrainingService.cs`:
-  - Genera dataset sintético de entrenamiento.
-  - Entrena dos modelos de regresión:
-    - Cantidad de materiales.
-    - Horas-persona de mano de obra.
-  - Guarda artefactos del modelo en `PriceVision.Api/Artifacts`.
-- `PredictiveModelService.cs`:
-  - Carga modelos entrenados.
-  - Normaliza duración (`dias`/`meses`) a días.
-  - Predice:
-    - `MaterialesEstimados.Quantity`
-    - `ManoObraRequeridaHorasPersona`
-  - Calcula además costo estimado en COP para materiales.
+#### `Projects`
 
-### 2) Servicio PredictiveModel
+Guarda el registro base del proyecto:
 
-Se creó mediante contrato y su implementación:
+- `Id`
+- `Name`
+- `AreaM2`
+- `Location`
+- `Type`
+- `DurationMonths`
+- `BaseCostCop`
+- `CreatedAtUtc`
 
-- Contrato: `Application/Abstractions/IPredictiveModelService.cs`
-- Implementación: `Infrastructure/Ml/PredictiveModelService.cs`
+#### `Predictions`
 
-También se agregó:
+Guarda las predicciones de recursos:
 
-- `IModelTrainingService` para entrenamiento.
-- `IPredictionRepository` para persistencia.
+- `ProjectId`
+- `AreaM2`
+- `Type`
+- `Location`
+- `DurationDays`
+- `EstimatedMaterialQuantity`
+- `EstimatedMaterialCostCop`
+- `RequiredLaborHours`
+- `PredictedMaterials`
+- `PredictedLabor`
+- `ModelVersion`
+- `CreatedAtUtc`
 
-### 3) Persistencia en entidad Prediction
+#### `FinancialPredictions`
 
-Se creó `Domain/Entities/Prediction.cs` y persistencia con EF Core SQLite:
+Guarda la prediccion financiera por proyecto:
 
-- `PriceVisionDbContext.cs`
-- `PredictionRepository.cs`
-- Configuración DI en `Infrastructure/DependencyInjection.cs`
-- Connection string en `Api/appsettings.json`
+- `ProjectId`
+- `EstimatedTotalCostCop`
+- `MinimumEstimatedCostCop`
+- `MaximumEstimatedCostCop`
+- `ConfidencePercentage`
+- `ConfidenceLevel`
+- `HistoricalAverageCostPerM2`
+- `LocationTrendFactor`
+- `CreatedAtUtc`
 
-Campos persistidos relevantes:
+#### `EVM_Records`
 
-- Entradas: `AreaM2`, `Type`, `Location`, `DurationDays`
-- Salidas: `EstimatedMaterialQuantity`, `EstimatedMaterialCostCop`, `RequiredLaborHours`
-- Trazabilidad: `ModelVersion`, `CreatedAtUtc`
+Guarda calculos EVM:
 
-### 4) API expuesta para entrenamiento y predicción
+- `ProjectId`
+- `PeriodDateUtc`
+- `PV`
+- `EV`
+- `AC`
+- `CPI`
+- `SPI`
+- `CostInterpretation`
+- `ScheduleInterpretation`
+- `CreatedAtUtc`
 
-Endpoints en `Api/Program.cs`:
+## Endpoints principales
 
-- `POST /api/predictions/train`
-- `POST /api/predictions`
-- `GET /api/predictions`
-- `GET /api/predictions/{id}`
+### Salud
+
 - `GET /api/health`
 
-### 5) Dataset histórico (estado actual)
+### Proyectos
 
-Para desarrollo inicial se dejó flujo con dataset sintético (`synthetic-training-data.csv`) para habilitar pruebas y reemplazo posterior por dataset histórico real sin cambiar el contrato del API.
+- `GET /api/projects`
+- `POST /api/projects`
+- `GET /api/projects/{projectId}/history`
 
-## Comandos para correr y probar
+### Predicciones de recursos
+
+- `POST /api/projects/{projectId}/predict`
+- `GET /api/predictions`
+- `GET /api/predictions/{id}`
+- `POST /api/predictions/train`
+
+### Prediccion financiera
+
+- `POST /api/projects/{projectId}/financial-predict`
+- `GET /api/financial-predictions`
+
+### EVM
+
+- `POST /api/evm/calculate`
+- `GET /api/evm/recent`
+- `GET /api/evm/{projectId}/history`
 
 ## Requisitos
 
 - .NET SDK 10
-- Node.js + npm (para frontend)
+- Node.js y npm
 
-## Backend
+## Ejecucion
 
-Restaurar y compilar:
+### Backend
+
+Desde la raiz del repo:
 
 ```powershell
 dotnet restore backend\PriceVision.Api\PriceVision.Api.csproj
-dotnet build backend\PriceVision.Api\PriceVision.Api.csproj
-```
-
-Ejecutar API (perfil HTTP):
-
-```powershell
 dotnet run --project backend\PriceVision.Api\PriceVision.Api.csproj --launch-profile http
 ```
 
@@ -164,7 +241,55 @@ URL esperada:
 
 - `http://localhost:5054`
 
-Entrenar modelo (PowerShell):
+Comprobacion rapida:
+
+```powershell
+Invoke-RestMethod -Method Get -Uri "http://localhost:5054/api/health"
+```
+
+### Frontend
+
+```powershell
+cd frontend\pricevision-ui
+npm install
+npm start
+```
+
+URL esperada:
+
+- `http://localhost:4200`
+
+El frontend usa proxy hacia el backend.
+
+## Flujo recomendado de prueba
+
+### 1. Registrar proyecto
+
+Desde la interfaz:
+
+- ir a `Registrar proyecto`
+- completar los datos obligatorios
+- guardar
+
+Ejemplo API:
+
+```powershell
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:5054/api/projects" `
+  -ContentType "application/json" `
+  -Body '{
+    "name": "Centro Logistico Norte",
+    "areaM2": 1250,
+    "location": "Bogota",
+    "type": "Comercial",
+    "durationMonths": 12,
+    "baseCostCop": 980000000
+  }'
+```
+
+### 2. Ejecutar prediccion de recursos
+
+Entrenamiento inicial del modelo, si hace falta:
 
 ```powershell
 Invoke-RestMethod -Method Post `
@@ -173,48 +298,63 @@ Invoke-RestMethod -Method Post `
   -Body '{"rows":3000}'
 ```
 
-Predecir (PowerShell):
+Prediccion por proyecto:
 
 ```powershell
 Invoke-RestMethod -Method Post `
-  -Uri "http://localhost:5054/api/predictions" `
+  -Uri "http://localhost:5054/api/projects/{PROJECT_ID}/predict" `
   -ContentType "application/json" `
   -Body '{
-    "areaM2": 850,
-    "type": "Comercial",
-    "location": "Bogota",
-    "duration": 10,
-    "durationUnit": "meses"
+    "predictMaterials": true,
+    "predictLabor": true
   }'
 ```
 
-Consultar historial:
+### 3. Generar prediccion financiera
 
 ```powershell
-Invoke-RestMethod -Method Get -Uri "http://localhost:5054/api/predictions?take=10"
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:5054/api/projects/{PROJECT_ID}/financial-predict"
 ```
 
-## Frontend
-
-Instalar dependencias:
+### 4. Calcular EVM
 
 ```powershell
-cd frontend\pricevision-ui
-npm install
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:5054/api/evm/calculate" `
+  -ContentType "application/json" `
+  -Body '{
+    "projectId": "{PROJECT_ID}"
+  }'
 ```
 
-Ejecutar en desarrollo:
+## Reglas funcionales importantes
 
-```powershell
-npm start
-```
+- un proyecto puede registrarse sin ejecutar predicciones inmediatamente
+- las predicciones de materiales y mano de obra se aplican por separado o juntas
+- solo se permite ejecutar el modelo que falte en un proyecto
+- la prediccion financiera queda asociada al proyecto
+- EVM solo puede ejecutarse una vez por proyecto
+- el historial muestra eventos de prediccion, prediccion financiera y EVM
 
-## Notas de prueba funcional para HU #3
+## Validaciones historicas
 
-- Entrenar primero con `POST /api/predictions/train`.
-- Luego usar `POST /api/predictions` con `areaM2`, `type`, `location`, `duration`, `durationUnit`.
-- Verificar respuesta con:
-  - `materialesEstimados.quantity`
-  - `manoObraRequeridaHorasPersona`
-- Verificar persistencia en `GET /api/predictions`.
+Al registrar un proyecto, el backend puede mostrar advertencias no bloqueantes si detecta incoherencias frente a historicos guardados.
 
+Ejemplos:
+
+- costo base por m2 extremadamente bajo o alto
+- duracion inconsistente con el tipo de proyecto
+
+Estas advertencias:
+
+- no bloquean el registro
+- se calculan en backend
+- se muestran visualmente en Angular
+
+## Notas tecnicas
+
+- los modelos de materiales y mano de obra usan dataset sintetico en esta etapa
+- la prediccion financiera actual es un servicio de calculo, no un modelo ML independiente
+- los artefactos del modelo se guardan en `backend/PriceVision.Api/Artifacts`
+- si cambias endpoints o esquema, reinicia el backend para que la app refleje los cambios
