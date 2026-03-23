@@ -1,5 +1,6 @@
 using PriceVision.Application.Abstractions;
 using PriceVision.Application.Contracts;
+using PriceVision.Domain.Entities;
 using PriceVision.Infrastructure;
 using PriceVision.Infrastructure.Persistence;
 
@@ -30,7 +31,7 @@ if (app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<PriceVisionDbContext>();
-    dbContext.Database.EnsureCreated();
+    await DatabaseSchemaInitializer.EnsureSchemaAsync(dbContext);
 }
 
 app.UseCors(corsPolicyName);
@@ -38,6 +39,219 @@ app.UseHttpsRedirection();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }))
    .WithName("HealthCheck");
+
+app.MapGet("/api/projects", async (
+    int? take,
+    IProjectRepository projectRepository,
+    IPredictionRepository predictionRepository,
+    IEvmRepository evmRepository,
+    CancellationToken cancellationToken) =>
+{
+    var limit = Math.Clamp(take ?? 20, 1, 100);
+    var projects = await projectRepository.GetRecentAsync(limit, cancellationToken);
+
+    var response = new List<ProjectSummaryResponse>();
+    foreach (var project in projects)
+    {
+        var hasPrediction = await predictionRepository.ExistsForProjectAsync(project.Id, cancellationToken);
+        var hasMaterialsPrediction = await predictionRepository.ExistsForProjectAsync(project.Id, predictedMaterials: true, predictedLabor: false, cancellationToken);
+        var hasLaborPrediction = await predictionRepository.ExistsForProjectAsync(project.Id, predictedMaterials: false, predictedLabor: true, cancellationToken);
+        var hasEvm = await evmRepository.ExistsForProjectAsync(project.Id, cancellationToken);
+        response.Add(new ProjectSummaryResponse(
+            ProjectId: project.Id,
+            Name: project.Name,
+            AreaM2: project.AreaM2,
+            Location: project.Location,
+            Type: project.Type,
+            DurationMonths: project.DurationMonths,
+            BaseCostCop: project.BaseCostCop,
+            CreatedAtUtc: project.CreatedAtUtc,
+            HasPrediction: hasPrediction,
+            HasMaterialsPrediction: hasMaterialsPrediction,
+            HasLaborPrediction: hasLaborPrediction,
+            HasEvm: hasEvm));
+    }
+
+    return Results.Ok(response);
+})
+.WithName("GetRecentProjects");
+
+app.MapGet("/api/projects/{projectId:guid}/history", async (
+    Guid projectId,
+    IProjectRepository projectRepository,
+    IPredictionRepository predictionRepository,
+    IEvmRepository evmRepository,
+    CancellationToken cancellationToken) =>
+{
+    var project = await projectRepository.GetByIdAsync(projectId, cancellationToken);
+    if (project is null)
+    {
+        return Results.NotFound();
+    }
+
+    var predictions = await predictionRepository.GetByProjectIdAsync(projectId, cancellationToken);
+    var evmRecords = await evmRepository.GetByProjectIdAsync(projectId, 120, cancellationToken);
+
+    var history = new List<ProjectActionHistoryItem>
+    {
+    };
+
+    history.AddRange(predictions.Select(prediction => new ProjectActionHistoryItem(
+        ActionType: "prediction",
+        OccurredAtUtc: prediction.CreatedAtUtc,
+        Title: "Prediccion generada",
+        Summary: BuildPredictionHistorySummary(prediction))));
+
+    history.AddRange(evmRecords.Select(record => new ProjectActionHistoryItem(
+        ActionType: "evm",
+        OccurredAtUtc: record.CreatedAtUtc,
+        Title: "Calculo EVM guardado",
+        Summary: $"PV {record.PV:N0}, EV {record.EV:N0}, AC {record.AC:N0}, CPI {record.CPI:N2}, SPI {record.SPI:N2}")));
+
+    return Results.Ok(history.OrderByDescending(x => x.OccurredAtUtc));
+})
+.WithName("GetProjectActionHistory");
+
+app.MapPost("/api/projects", async (
+    CreateProjectRequest request,
+    IProjectValidationService projectValidationService,
+    IProjectRepository projectRepository,
+    CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Name))
+    {
+        return Results.BadRequest(new { error = "El nombre del proyecto es obligatorio." });
+    }
+
+    if (request.AreaM2 <= 0)
+    {
+        return Results.BadRequest(new { error = "El area debe ser mayor que cero." });
+    }
+
+    if (request.DurationMonths <= 0)
+    {
+        return Results.BadRequest(new { error = "La duracion debe ser mayor que cero." });
+    }
+
+    if (request.BaseCostCop < 0)
+    {
+        return Results.BadRequest(new { error = "Los costos base no pueden ser negativos." });
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Type) || string.IsNullOrWhiteSpace(request.Location))
+    {
+        return Results.BadRequest(new { error = "Tipo de proyecto y ubicacion son obligatorios." });
+    }
+
+    var warnings = await projectValidationService.ValidateAsync(request, cancellationToken);
+
+    var project = new Project
+    {
+        Name = request.Name.Trim(),
+        AreaM2 = request.AreaM2,
+        Location = request.Location.Trim(),
+        Type = request.Type.Trim(),
+        DurationMonths = request.DurationMonths,
+        BaseCostCop = request.BaseCostCop,
+        CreatedAtUtc = DateTime.UtcNow
+    };
+
+    await projectRepository.AddAsync(project, cancellationToken);
+
+    var projectSummary = new ProjectSummaryResponse(
+        ProjectId: project.Id,
+        Name: project.Name,
+        AreaM2: project.AreaM2,
+        Location: project.Location,
+        Type: project.Type,
+        DurationMonths: project.DurationMonths,
+        BaseCostCop: project.BaseCostCop,
+        CreatedAtUtc: project.CreatedAtUtc,
+        HasPrediction: false,
+        HasMaterialsPrediction: false,
+        HasLaborPrediction: false,
+        HasEvm: false);
+
+    return Results.Ok(new CreateProjectResponse(projectSummary, warnings));
+})
+.WithName("CreateProject");
+
+app.MapPost("/api/projects/{projectId:guid}/predict", async (
+    Guid projectId,
+    CreatePredictionForProjectRequest request,
+    IProjectRepository projectRepository,
+    IPredictiveModelService predictiveModelService,
+    IPredictionRepository predictionRepository,
+    IModelTrainingService trainingService,
+    CancellationToken cancellationToken) =>
+{
+    var project = await projectRepository.GetByIdAsync(projectId, cancellationToken);
+    if (project is null)
+    {
+        return Results.NotFound();
+    }
+
+    var hasMaterialsPrediction = await predictionRepository.ExistsForProjectAsync(projectId, predictedMaterials: true, predictedLabor: false, cancellationToken);
+    var hasLaborPrediction = await predictionRepository.ExistsForProjectAsync(projectId, predictedMaterials: false, predictedLabor: true, cancellationToken);
+
+    if (request.PredictMaterials && hasMaterialsPrediction)
+    {
+        return Results.BadRequest(new { error = "Este proyecto ya tiene una prediccion de materiales registrada." });
+    }
+
+    if (request.PredictLabor && hasLaborPrediction)
+    {
+        return Results.BadRequest(new { error = "Este proyecto ya tiene una prediccion de mano de obra registrada." });
+    }
+
+    if (!request.PredictMaterials && !request.PredictLabor)
+    {
+        return Results.BadRequest(new { error = "Selecciona al menos un modelo de prediccion." });
+    }
+
+    var predictionRequest = new PredictionRequest(
+        ProjectId: projectId,
+        AreaM2: project.AreaM2,
+        Type: project.Type,
+        Location: project.Location,
+        Duration: project.DurationMonths,
+        DurationUnit: "meses");
+
+    PredictionResult prediction;
+    try
+    {
+        prediction = predictiveModelService.Predict(predictionRequest);
+    }
+    catch (InvalidOperationException)
+    {
+        trainingService.Train(3000);
+        prediction = predictiveModelService.Predict(predictionRequest);
+    }
+
+    var predictionEntity = predictiveModelService.BuildPredictionEntity(
+        predictionRequest,
+        prediction,
+        predictedMaterials: request.PredictMaterials,
+        predictedLabor: request.PredictLabor);
+    await predictionRepository.AddAsync(predictionEntity, cancellationToken);
+
+    var response = new ProjectPredictionResponse(
+        ProjectId: project.Id,
+        Name: project.Name,
+        AreaM2: project.AreaM2,
+        Location: project.Location,
+        Type: project.Type,
+        DurationMonths: project.DurationMonths,
+        BaseCostCop: project.BaseCostCop,
+        CreatedAtUtc: project.CreatedAtUtc,
+        PredictMaterials: request.PredictMaterials,
+        PredictLabor: request.PredictLabor,
+        MaterialesEstimados: request.PredictMaterials ? prediction.MaterialesEstimados : null,
+        ManoObraRequeridaHorasPersona: request.PredictLabor ? prediction.ManoObraRequeridaHorasPersona : null);
+
+    return Results.Ok(response);
+})
+.WithName("CreatePredictionForProject");
 
 app.MapPost("/api/predictions/train", (TrainModelRequest? request, IModelTrainingService trainingService) =>
 {
@@ -50,6 +264,11 @@ app.MapPost("/api/predictions/train", (TrainModelRequest? request, IModelTrainin
 
 app.MapPost("/api/predictions", async (PredictionRequest request, IPredictiveModelService predictiveModelService, IPredictionRepository repository, CancellationToken cancellationToken) =>
 {
+    if (request.ProjectId == Guid.Empty)
+    {
+        return Results.BadRequest(new { error = "ProjectId es obligatorio." });
+    }
+
     if (request.AreaM2 <= 0)
     {
         return Results.BadRequest(new { error = "AreaM2 debe ser mayor que cero." });
@@ -84,14 +303,146 @@ app.MapGet("/api/predictions/{id:guid}", async (Guid id, IPredictionRepository r
 })
 .WithName("GetPredictionById");
 
-app.MapGet("/api/predictions", async (int? take, IPredictionRepository repository, CancellationToken cancellationToken) =>
+app.MapGet("/api/predictions", async (
+    int? take,
+    IPredictionRepository repository,
+    IProjectRepository projectRepository,
+    CancellationToken cancellationToken) =>
 {
     var limit = Math.Clamp(take ?? 20, 1, 100);
     var predictions = await repository.GetRecentAsync(limit, cancellationToken);
-    return Results.Ok(predictions);
+    var projects = await projectRepository.GetAllAsync(cancellationToken);
+    var projectNames = projects.ToDictionary(x => x.Id, x => x.Name);
+
+    return Results.Ok(predictions.Select(prediction => new PredictionSummaryResponse(
+        PredictionId: prediction.Id,
+        ProjectId: prediction.ProjectId,
+        ProjectName: projectNames.GetValueOrDefault(prediction.ProjectId, "Proyecto"),
+        AreaM2: projects.FirstOrDefault(x => x.Id == prediction.ProjectId)?.AreaM2 ?? prediction.AreaM2,
+        Type: prediction.Type,
+        Location: prediction.Location,
+        DurationMonths: (projects.FirstOrDefault(x => x.Id == prediction.ProjectId)?.DurationMonths) ?? (prediction.DurationDays / 30f),
+        BaseCostCop: projects.FirstOrDefault(x => x.Id == prediction.ProjectId)?.BaseCostCop ?? 0m,
+        PredictedMaterials: prediction.PredictedMaterials,
+        PredictedLabor: prediction.PredictedLabor,
+        EstimatedMaterialQuantity: prediction.EstimatedMaterialQuantity,
+        EstimatedMaterialCostCop: prediction.EstimatedMaterialCostCop,
+        RequiredLaborHours: prediction.RequiredLaborHours,
+        CreatedAtUtc: prediction.CreatedAtUtc)));
 })
 .WithName("GetRecentPredictions");
 
+app.MapGet("/api/evm/recent", async (
+    int? take,
+    IEvmRepository repository,
+    IProjectRepository projectRepository,
+    CancellationToken cancellationToken) =>
+{
+    var limit = Math.Clamp(take ?? 20, 1, 100);
+    var records = await repository.GetRecentAsync(limit, cancellationToken);
+    var projects = await projectRepository.GetAllAsync(cancellationToken);
+    var projectNames = projects.ToDictionary(x => x.Id, x => x.Name);
+
+    return Results.Ok(records.Select(record => new EvmSummaryResponse(
+        RecordId: record.Id,
+        ProjectId: record.ProjectId,
+        ProjectName: projectNames.GetValueOrDefault(record.ProjectId, "Proyecto"),
+        AreaM2: projects.FirstOrDefault(x => x.Id == record.ProjectId)?.AreaM2 ?? 0f,
+        Type: projects.FirstOrDefault(x => x.Id == record.ProjectId)?.Type ?? string.Empty,
+        Location: projects.FirstOrDefault(x => x.Id == record.ProjectId)?.Location ?? string.Empty,
+        DurationMonths: projects.FirstOrDefault(x => x.Id == record.ProjectId)?.DurationMonths ?? 0f,
+        BaseCostCop: projects.FirstOrDefault(x => x.Id == record.ProjectId)?.BaseCostCop ?? 0m,
+        PeriodDateUtc: record.PeriodDateUtc,
+        PV: record.PV,
+        EV: record.EV,
+        AC: record.AC,
+        CPI: record.CPI,
+        SPI: record.SPI,
+        CostInterpretation: record.CostInterpretation,
+        ScheduleInterpretation: record.ScheduleInterpretation,
+        CreatedAtUtc: record.CreatedAtUtc)));
+})
+.WithName("GetRecentEvm");
+
+app.MapPost("/api/evm/calculate", async (
+    CalculateEvmRequest request,
+    IEvmService evmService,
+    IProjectRepository projectRepository,
+    IPredictionRepository predictionRepository,
+    IEvmRepository evmRepository,
+    CancellationToken cancellationToken) =>
+{
+    if (request.ProjectId == Guid.Empty)
+    {
+        return Results.BadRequest(new { error = "ProjectId es obligatorio." });
+    }
+
+    try
+    {
+        var project = await projectRepository.GetByIdAsync(request.ProjectId, cancellationToken);
+        if (project is null)
+        {
+            return Results.NotFound();
+        }
+
+        var hasMaterialsPrediction = await predictionRepository.ExistsForProjectAsync(request.ProjectId, predictedMaterials: true, predictedLabor: false, cancellationToken);
+        var hasLaborPrediction = await predictionRepository.ExistsForProjectAsync(request.ProjectId, predictedMaterials: false, predictedLabor: true, cancellationToken);
+
+        if (!hasMaterialsPrediction || !hasLaborPrediction)
+        {
+            return Results.BadRequest(new { error = "Este proyecto necesita prediccion de materiales y mano de obra antes de calcular EVM." });
+        }
+
+        if (await evmRepository.ExistsForProjectAsync(request.ProjectId, cancellationToken))
+        {
+            return Results.BadRequest(new { error = "Este proyecto ya tiene un calculo EVM registrado." });
+        }
+
+        var result = await evmService.CalculateAndStoreAsync(request.ProjectId, request.PeriodDateUtc, cancellationToken);
+        return Results.Ok(result);
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+})
+.WithName("CalculateEvm");
+
+app.MapGet("/api/evm/{projectId:guid}/history", async (Guid projectId, int? take, IEvmService evmService, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var history = await evmService.GetHistoryAsync(projectId, take ?? 20, cancellationToken);
+        return Results.Ok(history);
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+})
+.WithName("GetEvmHistory");
+
 app.Run();
 
+static string BuildPredictionHistorySummary(Prediction prediction)
+{
+    var parts = new List<string>();
+
+    if (prediction.PredictedMaterials)
+    {
+        parts.Add($"Materiales {prediction.EstimatedMaterialQuantity:N2}");
+        parts.Add($"costo estimado {prediction.EstimatedMaterialCostCop:N0} COP");
+    }
+
+    if (prediction.PredictedLabor)
+    {
+        parts.Add($"mano de obra {prediction.RequiredLaborHours:N2} horas-persona");
+    }
+
+    return parts.Count > 0 ? string.Join(", ", parts) : "Prediccion registrada";
+}
+
 public sealed record TrainModelRequest(int Rows);
+public sealed record CalculateEvmRequest(
+    Guid ProjectId,
+    DateTime? PeriodDateUtc);

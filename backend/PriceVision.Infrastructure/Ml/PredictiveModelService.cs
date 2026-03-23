@@ -35,6 +35,31 @@ public sealed class PredictiveModelService(IHostEnvironment environment) : IPred
         ["Rural"] = 0.95m
     };
 
+    private static readonly Dictionary<string, float> TypeMaterialFactor = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Residencial"] = 1.00f,
+        ["Comercial"] = 1.25f,
+        ["Industrial"] = 1.40f,
+        ["Remodelacion"] = 0.85f
+    };
+
+    private static readonly Dictionary<string, float> TypeLaborFactor = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Residencial"] = 1.00f,
+        ["Comercial"] = 1.10f,
+        ["Industrial"] = 1.30f,
+        ["Remodelacion"] = 1.20f
+    };
+
+    private static readonly Dictionary<string, float> LocationFactor = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Bogota"] = 1.15f,
+        ["Medellin"] = 1.08f,
+        ["Cali"] = 1.04f,
+        ["Barranquilla"] = 1.02f,
+        ["Rural"] = 0.95f
+    };
+
     public PredictionResult Predict(PredictionRequest request)
     {
         if (!File.Exists(_materialsModelPath) || !File.Exists(_laborModelPath))
@@ -53,8 +78,11 @@ public sealed class PredictiveModelService(IHostEnvironment environment) : IPred
             DurationDays = normalizedDurationDays
         };
 
-        var quantity = Math.Max(0f, _materialsPredictionEngine!.Predict(input).Score);
-        var laborHours = Math.Max(0f, _laborPredictionEngine!.Predict(input).Score);
+        var rawQuantity = _materialsPredictionEngine!.Predict(input).Score;
+        var rawLaborHours = _laborPredictionEngine!.Predict(input).Score;
+
+        var quantity = rawQuantity > 0f ? rawQuantity : EstimateMaterialsFallback(input);
+        var laborHours = rawLaborHours > 0f ? rawLaborHours : EstimateLaborFallback(input);
 
         var unitCost = UnitCostByType.GetValueOrDefault(request.Type, 250_000m);
         var locationMultiplier = CostMultiplierByLocation.GetValueOrDefault(request.Location, 1.0m);
@@ -65,22 +93,41 @@ public sealed class PredictiveModelService(IHostEnvironment environment) : IPred
             ManoObraRequeridaHorasPersona: laborHours);
     }
 
-    public Prediction BuildPredictionEntity(PredictionRequest request, PredictionResult result)
+    public Prediction BuildPredictionEntity(PredictionRequest request, PredictionResult result, bool predictedMaterials = true, bool predictedLabor = true)
     {
         var durationDays = NormalizeDurationToDays(request.Duration, request.DurationUnit);
 
         return new Prediction
         {
+            ProjectId = request.ProjectId,
             AreaM2 = request.AreaM2,
             Type = request.Type,
             Location = request.Location,
             DurationDays = (int)MathF.Round(durationDays),
+            PredictedMaterials = predictedMaterials,
+            PredictedLabor = predictedLabor,
             EstimatedMaterialQuantity = result.MaterialesEstimados.Quantity,
             EstimatedMaterialCostCop = result.MaterialesEstimados.CostCop,
             RequiredLaborHours = result.ManoObraRequeridaHorasPersona,
             ModelVersion = ReadModelVersion(),
             CreatedAtUtc = DateTime.UtcNow
         };
+    }
+
+    private static float EstimateMaterialsFallback(PredictionInputModel input)
+    {
+        var typeFactor = TypeMaterialFactor.GetValueOrDefault(input.Type, 1.0f);
+        var locationFactor = LocationFactor.GetValueOrDefault(input.Location, 1.0f);
+        var materialBase = input.AreaM2 * typeFactor * locationFactor * (1.0f + input.DurationDays / 1400f);
+        return MathF.Max(10f, materialBase);
+    }
+
+    private static float EstimateLaborFallback(PredictionInputModel input)
+    {
+        var typeFactor = TypeLaborFactor.GetValueOrDefault(input.Type, 1.0f);
+        var locationFactor = LocationFactor.GetValueOrDefault(input.Location, 1.0f);
+        var laborBase = input.AreaM2 * 0.18f * typeFactor * locationFactor * (0.90f + input.DurationDays / 1800f);
+        return MathF.Max(8f, laborBase);
     }
 
     private void EnsureModelsLoaded()

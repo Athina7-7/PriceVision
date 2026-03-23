@@ -11,7 +11,14 @@ describe('AppComponent', () => {
         {
           provide: ApiService,
           useValue: {
-            getWeatherForecast: () => of([])
+            getRecentProjects: () => of([]),
+            getRecentPredictions: () => of([]),
+            getRecentEvm: () => of([]),
+            getProjectActionHistory: () => of([]),
+            createProject: () => of(null),
+            createPredictionForProject: () => of(null),
+            calculateEvm: () => of(null),
+            getEvmHistory: () => of([])
           }
         }
       ]
