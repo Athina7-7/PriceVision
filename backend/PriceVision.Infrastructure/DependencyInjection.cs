@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PriceVision.Application.Abstractions;
+using PriceVision.Infrastructure.Forecasting;
 using PriceVision.Infrastructure.Ml;
 using PriceVision.Infrastructure.Persistence;
 using PriceVision.Infrastructure.Validation;
@@ -18,6 +19,8 @@ public static class DependencyInjection
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IProjectValidationService, ProjectValidationService>();
         services.AddScoped<IPredictionRepository, PredictionRepository>();
+        services.AddScoped<IFinancialPredictionRepository, FinancialPredictionRepository>();
+        services.AddScoped<IFinancialForecastService, FinancialForecastService>();
         services.AddScoped<IEvmRepository, EvmRepository>();
         services.AddScoped<IEvmService, EvmService>();
         services.AddSingleton<IModelTrainingService, ModelTrainingService>();

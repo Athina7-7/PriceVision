@@ -13,10 +13,12 @@ describe('AppComponent', () => {
           useValue: {
             getRecentProjects: () => of([]),
             getRecentPredictions: () => of([]),
+            getRecentFinancialPredictions: () => of([]),
             getRecentEvm: () => of([]),
             getProjectActionHistory: () => of([]),
             createProject: () => of(null),
             createPredictionForProject: () => of(null),
+            createFinancialPredictionForProject: () => of(null),
             calculateEvm: () => of(null),
             getEvmHistory: () => of([])
           }

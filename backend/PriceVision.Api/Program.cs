@@ -44,6 +44,7 @@ app.MapGet("/api/projects", async (
     int? take,
     IProjectRepository projectRepository,
     IPredictionRepository predictionRepository,
+    IFinancialPredictionRepository financialPredictionRepository,
     IEvmRepository evmRepository,
     CancellationToken cancellationToken) =>
 {
@@ -56,6 +57,7 @@ app.MapGet("/api/projects", async (
         var hasPrediction = await predictionRepository.ExistsForProjectAsync(project.Id, cancellationToken);
         var hasMaterialsPrediction = await predictionRepository.ExistsForProjectAsync(project.Id, predictedMaterials: true, predictedLabor: false, cancellationToken);
         var hasLaborPrediction = await predictionRepository.ExistsForProjectAsync(project.Id, predictedMaterials: false, predictedLabor: true, cancellationToken);
+        var hasFinancialPrediction = await financialPredictionRepository.ExistsForProjectAsync(project.Id, cancellationToken);
         var hasEvm = await evmRepository.ExistsForProjectAsync(project.Id, cancellationToken);
         response.Add(new ProjectSummaryResponse(
             ProjectId: project.Id,
@@ -69,6 +71,7 @@ app.MapGet("/api/projects", async (
             HasPrediction: hasPrediction,
             HasMaterialsPrediction: hasMaterialsPrediction,
             HasLaborPrediction: hasLaborPrediction,
+            HasFinancialPrediction: hasFinancialPrediction,
             HasEvm: hasEvm));
     }
 
@@ -80,6 +83,7 @@ app.MapGet("/api/projects/{projectId:guid}/history", async (
     Guid projectId,
     IProjectRepository projectRepository,
     IPredictionRepository predictionRepository,
+    IFinancialPredictionRepository financialPredictionRepository,
     IEvmRepository evmRepository,
     CancellationToken cancellationToken) =>
 {
@@ -90,6 +94,7 @@ app.MapGet("/api/projects/{projectId:guid}/history", async (
     }
 
     var predictions = await predictionRepository.GetByProjectIdAsync(projectId, cancellationToken);
+    var financialPrediction = await financialPredictionRepository.GetByProjectIdAsync(projectId, cancellationToken);
     var evmRecords = await evmRepository.GetByProjectIdAsync(projectId, 120, cancellationToken);
 
     var history = new List<ProjectActionHistoryItem>
@@ -101,6 +106,15 @@ app.MapGet("/api/projects/{projectId:guid}/history", async (
         OccurredAtUtc: prediction.CreatedAtUtc,
         Title: "Prediccion generada",
         Summary: BuildPredictionHistorySummary(prediction))));
+
+    if (financialPrediction is not null)
+    {
+        history.Add(new ProjectActionHistoryItem(
+            ActionType: "financial_prediction",
+            OccurredAtUtc: financialPrediction.CreatedAtUtc,
+            Title: "Prediccion financiera generada",
+            Summary: $"Costo total {financialPrediction.EstimatedTotalCostCop:N0} COP, rango {financialPrediction.MinimumEstimatedCostCop:N0} - {financialPrediction.MaximumEstimatedCostCop:N0} COP, confianza {financialPrediction.ConfidencePercentage:N0}% ({financialPrediction.ConfidenceLevel})"));
+    }
 
     history.AddRange(evmRecords.Select(record => new ProjectActionHistoryItem(
         ActionType: "evm",
@@ -170,11 +184,29 @@ app.MapPost("/api/projects", async (
         HasPrediction: false,
         HasMaterialsPrediction: false,
         HasLaborPrediction: false,
+        HasFinancialPrediction: false,
         HasEvm: false);
 
     return Results.Ok(new CreateProjectResponse(projectSummary, warnings));
 })
 .WithName("CreateProject");
+
+app.MapPost("/api/projects/{projectId:guid}/financial-predict", async (
+    Guid projectId,
+    IFinancialForecastService financialForecastService,
+    CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var result = await financialForecastService.CreateForProjectAsync(projectId, cancellationToken);
+        return Results.Ok(result);
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+})
+.WithName("CreateFinancialPredictionForProject");
 
 app.MapPost("/api/projects/{projectId:guid}/predict", async (
     Guid projectId,
@@ -363,6 +395,41 @@ app.MapGet("/api/evm/recent", async (
         CreatedAtUtc: record.CreatedAtUtc)));
 })
 .WithName("GetRecentEvm");
+
+app.MapGet("/api/financial-predictions", async (
+    int? take,
+    IFinancialPredictionRepository repository,
+    IProjectRepository projectRepository,
+    CancellationToken cancellationToken) =>
+{
+    var limit = Math.Clamp(take ?? 20, 1, 100);
+    var items = await repository.GetRecentAsync(limit, cancellationToken);
+    var projects = await projectRepository.GetAllAsync(cancellationToken);
+    var projectMap = projects.ToDictionary(x => x.Id, x => x);
+
+    return Results.Ok(items.Select(item =>
+    {
+        var project = projectMap.GetValueOrDefault(item.ProjectId);
+        return new FinancialPredictionSummaryResponse(
+            FinancialPredictionId: item.Id,
+            ProjectId: item.ProjectId,
+            ProjectName: project?.Name ?? "Proyecto",
+            AreaM2: project?.AreaM2 ?? 0f,
+            Type: project?.Type ?? string.Empty,
+            Location: project?.Location ?? string.Empty,
+            DurationMonths: project?.DurationMonths ?? 0f,
+            BaseCostCop: project?.BaseCostCop ?? 0m,
+            EstimatedTotalCostCop: item.EstimatedTotalCostCop,
+            MinimumEstimatedCostCop: item.MinimumEstimatedCostCop,
+            MaximumEstimatedCostCop: item.MaximumEstimatedCostCop,
+            ConfidencePercentage: item.ConfidencePercentage,
+            ConfidenceLevel: item.ConfidenceLevel,
+            HistoricalAverageCostPerM2Cop: item.HistoricalAverageCostPerM2Cop,
+            LocationTrendFactor: item.LocationTrendFactor,
+            CreatedAtUtc: item.CreatedAtUtc);
+    }));
+})
+.WithName("GetRecentFinancialPredictions");
 
 app.MapPost("/api/evm/calculate", async (
     CalculateEvmRequest request,

@@ -65,6 +65,25 @@ export interface ProjectPredictionResponse {
   manoObraRequeridaHorasPersona: number | null;
 }
 
+export interface FinancialPredictionResponse {
+  financialPredictionId: string;
+  projectId: string;
+  projectName: string;
+  areaM2: number;
+  type: string;
+  location: string;
+  durationMonths: number;
+  baseCostCop: number;
+  estimatedTotalCostCop: number;
+  minimumEstimatedCostCop: number;
+  maximumEstimatedCostCop: number;
+  confidencePercentage: number;
+  confidenceLevel: string;
+  historicalAverageCostPerM2Cop: number;
+  locationTrendFactor: number;
+  createdAtUtc: string;
+}
+
 export interface ProjectSummaryResponse {
   projectId: string;
   name: string;
@@ -77,6 +96,7 @@ export interface ProjectSummaryResponse {
   hasPrediction: boolean;
   hasMaterialsPrediction: boolean;
   hasLaborPrediction: boolean;
+  hasFinancialPrediction: boolean;
   hasEvm: boolean;
 }
 
@@ -129,6 +149,25 @@ export interface EvmSummaryResponse {
   createdAtUtc: string;
 }
 
+export interface FinancialPredictionSummaryResponse {
+  financialPredictionId: string;
+  projectId: string;
+  projectName: string;
+  areaM2: number;
+  type: string;
+  location: string;
+  durationMonths: number;
+  baseCostCop: number;
+  estimatedTotalCostCop: number;
+  minimumEstimatedCostCop: number;
+  maximumEstimatedCostCop: number;
+  confidencePercentage: number;
+  confidenceLevel: string;
+  historicalAverageCostPerM2Cop: number;
+  locationTrendFactor: number;
+  createdAtUtc: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -141,6 +180,10 @@ export class ApiService {
 
   createPredictionForProject(projectId: string, payload: CreatePredictionForProjectRequest): Observable<ProjectPredictionResponse> {
     return this.http.post<ProjectPredictionResponse>(`${environment.apiBaseUrl}/projects/${projectId}/predict`, payload);
+  }
+
+  createFinancialPredictionForProject(projectId: string): Observable<FinancialPredictionResponse> {
+    return this.http.post<FinancialPredictionResponse>(`${environment.apiBaseUrl}/projects/${projectId}/financial-predict`, {});
   }
 
   getRecentProjects(take = 12): Observable<ProjectSummaryResponse[]> {
@@ -157,6 +200,10 @@ export class ApiService {
 
   getRecentEvm(take = 8): Observable<EvmSummaryResponse[]> {
     return this.http.get<EvmSummaryResponse[]>(`${environment.apiBaseUrl}/evm/recent?take=${take}`);
+  }
+
+  getRecentFinancialPredictions(take = 8): Observable<FinancialPredictionSummaryResponse[]> {
+    return this.http.get<FinancialPredictionSummaryResponse[]>(`${environment.apiBaseUrl}/financial-predictions?take=${take}`);
   }
 
   calculateEvm(projectId: string, periodDateUtc?: string): Observable<EvmCalculationResponse> {
