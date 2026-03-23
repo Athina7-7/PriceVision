@@ -1,31 +1,394 @@
-<main class="container">
-  <h1>{{ title }}</h1>
-  <p class="subtitle">Conexión Frontend ? Backend activa</p>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">PV</div>
+      <div>
+        <h1>PriceVision</h1>
+        <p>SICO Software 360</p>
+      </div>
+    </div>
 
-  <section *ngIf="loading" class="status">Cargando datos del backend...</section>
-  <section *ngIf="error" class="status error">{{ error }}</section>
+    <nav>
+      <button type="button" [class.active]="activeSection === 'registro'" (click)="activeSection = 'registro'">Registrar proyecto</button>
+      <button type="button" [class.active]="activeSection === 'prediccion'" (click)="activeSection = 'prediccion'">Predicciones</button>
+      <button type="button" [class.active]="activeSection === 'evm'" (click)="activeSection = 'evm'">EVM</button>
+      <button type="button" [class.active]="activeSection === 'historial'" (click)="activeSection = 'historial'">Historial</button>
+    </nav>
+  </aside>
 
-  <section *ngIf="!loading && !error">
-    <h2>WeatherForecast API</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Temp (C)</th>
-          <th>Temp (F)</th>
-          <th>Resumen</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let item of forecasts">
-          <td>{{ item.date }}</td>
-          <td>{{ item.temperatureC }}</td>
-          <td>{{ item.temperatureF }}</td>
-          <td>{{ item.summary ?? '-' }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-</main>
+  <main class="content">
+    <header>
+      <div>
+        <h2>PriceVision</h2>
+        <p>Registro de proyectos, predicciones por proyecto y calculo EVM controlado</p>
+      </div>
+      <div class="project-box" *ngIf="selectedProject">
+        <label>Proyecto activo</label>
+        <div class="project-chip">{{ selectedProject.name }}</div>
+      </div>
+    </header>
+
+    <section *ngIf="loading" class="status">Procesando solicitud...</section>
+    <section *ngIf="error" class="status error">{{ error }}</section>
+    <section *ngIf="success" class="status success">{{ success }}</section>
+    <section *ngIf="validationWarnings.length > 0" class="status warning">
+      <strong>Advertencias historicas:</strong>
+      <div *ngFor="let item of validationWarnings">
+        <strong>{{ item.title }}</strong>
+        <div>{{ item.message }}</div>
+      </div>
+    </section>
+    <section *ngIf="validationErrors.length > 0" class="status error">
+      <strong>Corrige el formulario:</strong>
+      <div *ngFor="let item of validationErrors">{{ item }}</div>
+    </section>
+
+    <section *ngIf="activeSection === 'registro'" class="panel">
+      <div class="status">
+        <strong>Paso 1:</strong>
+        Registra el proyecto con su nombre y datos base. Aqui no se aplican modelos; solo se guarda el proyecto para usarlo luego en predicciones y EVM.
+      </div>
+
+      <div class="form-card">
+        <div class="form-grid">
+          <label>
+            <span>Nombre del proyecto</span>
+            <input type="text" [(ngModel)]="form.name" />
+          </label>
+
+          <label>
+            <span>Area (m2)</span>
+            <input type="number" min="0.01" step="0.01" [(ngModel)]="form.areaM2" />
+          </label>
+
+          <label>
+            <span>Ubicacion</span>
+            <select [(ngModel)]="form.location">
+              <option value="">Selecciona una ubicacion</option>
+              <option *ngFor="let item of locations" [value]="item">{{ item }}</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Tipo de proyecto</span>
+            <select [(ngModel)]="form.type">
+              <option value="">Selecciona un tipo</option>
+              <option *ngFor="let item of projectTypes" [value]="item">{{ item }}</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Duracion estimada (meses)</span>
+            <input type="number" min="0.01" step="0.1" [(ngModel)]="form.durationMonths" />
+          </label>
+
+          <label>
+            <span>Costos base (COP)</span>
+            <input type="number" min="0" step="1" [(ngModel)]="form.baseCostCop" />
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="button" (click)="registerProject()">Guardar proyecto</button>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="activeSection === 'prediccion'" class="panel">
+      <div class="status">
+        <strong>Paso 2:</strong>
+        Elige un proyecto registrado y aplica uno o ambos modelos. Si el proyecto ya tiene prediccion, no se puede volver a ejecutar.
+      </div>
+
+      <div class="prediction-layout">
+        <div>
+          <div class="form-card">
+            <div class="form-grid">
+              <label>
+                <span>Proyecto</span>
+                <select [(ngModel)]="predictionSelection.projectId">
+                  <option value="">Selecciona un proyecto</option>
+                  <option *ngFor="let item of projects" [value]="item.projectId">
+                    {{ item.name }} - {{ item.type }} - Materiales {{ item.hasMaterialsPrediction ? 'Si' : 'No' }} - Mano de obra {{ item.hasLaborPrediction ? 'Si' : 'No' }}
+                  </option>
+                </select>
+              </label>
+            </div>
+
+            <div class="model-selector">
+              <span>Modelos a aplicar</span>
+              <label><input type="checkbox" [(ngModel)]="predictionSelection.predictMaterials" /> Materiales</label>
+              <label><input type="checkbox" [(ngModel)]="predictionSelection.predictLabor" /> Mano de obra</label>
+            </div>
+
+            <div class="actions">
+              <button type="button" (click)="createPrediction()">Aplicar prediccion</button>
+            </div>
+          </div>
+
+          <div class="cards prediction-cards" *ngIf="prediction">
+            <article>
+              <p>Proyecto</p>
+              <h3>{{ prediction.name }}</h3>
+              <small>{{ prediction.type }} / {{ prediction.location }}</small>
+            </article>
+            <article>
+              <p>Duracion / costo base</p>
+              <h3>{{ prediction.durationMonths }} meses</h3>
+              <small>{{ formatCop(prediction.baseCostCop) }}</small>
+            </article>
+            <article *ngIf="prediction.materialesEstimados">
+              <p>Resultado Materiales</p>
+              <h3>{{ prediction.materialesEstimados.quantity | number:'1.0-2' }}</h3>
+              <small>{{ formatCop(prediction.materialesEstimados.costCop) }}</small>
+            </article>
+            <article *ngIf="prediction.manoObraRequeridaHorasPersona !== null">
+              <p>Resultado Mano de Obra</p>
+              <h3>{{ prediction.manoObraRequeridaHorasPersona | number:'1.0-2' }}</h3>
+              <small>horas-persona</small>
+            </article>
+          </div>
+
+          <div class="chart-card" *ngIf="selectedPredictionDetail">
+            <h3>Detalle de prediccion</h3>
+            <div class="detail-grid">
+              <div>
+                <span>Proyecto</span>
+                <strong>{{ selectedPredictionDetail.projectName }}</strong>
+              </div>
+              <div>
+                <span>Modelo(s) elegidos</span>
+                <strong>
+                  {{ selectedPredictionDetail.predictedMaterials ? 'Materiales' : '' }}
+                  {{ selectedPredictionDetail.predictedMaterials && selectedPredictionDetail.predictedLabor ? ' + ' : '' }}
+                  {{ selectedPredictionDetail.predictedLabor ? 'Mano de obra' : '' }}
+                </strong>
+              </div>
+              <div>
+                <span>Fecha</span>
+                <strong>{{ asDateTime(selectedPredictionDetail.createdAtUtc) }}</strong>
+              </div>
+              <div>
+                <span>Area registrada</span>
+                <strong>{{ selectedPredictionDetail.areaM2 }} m2</strong>
+              </div>
+              <div>
+                <span>Tipo / ubicacion</span>
+                <strong>{{ selectedPredictionDetail.type }} / {{ selectedPredictionDetail.location }}</strong>
+              </div>
+              <div>
+                <span>Duracion / costo base</span>
+                <strong>{{ selectedPredictionDetail.durationMonths }} meses / {{ formatCop(selectedPredictionDetail.baseCostCop) }}</strong>
+              </div>
+              <div *ngIf="selectedPredictionDetail.predictedMaterials">
+                <span>Materiales</span>
+                <strong>{{ selectedPredictionDetail.estimatedMaterialQuantity | number:'1.0-2' }}</strong>
+              </div>
+              <div *ngIf="selectedPredictionDetail.predictedMaterials">
+                <span>Costo materiales</span>
+                <strong>{{ formatCop(selectedPredictionDetail.estimatedMaterialCostCop) }}</strong>
+              </div>
+              <div *ngIf="selectedPredictionDetail.predictedLabor">
+                <span>Mano de obra</span>
+                <strong>{{ selectedPredictionDetail.requiredLaborHours | number:'1.0-2' }} horas-persona</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Predicciones recientes</h3>
+          <div class="recent-predictions" *ngIf="recentPredictions.length > 0">
+            <article class="recent-card selectable" *ngFor="let item of recentPredictions" (click)="selectPredictionDetail(item)">
+              <p>{{ item.projectName }}</p>
+              <h4>{{ asDateTime(item.createdAtUtc) }}</h4>
+              <strong *ngIf="item.predictedMaterials">Materiales: {{ item.estimatedMaterialQuantity | number:'1.0-2' }}</strong>
+              <strong *ngIf="item.predictedLabor">Mano de obra: {{ item.requiredLaborHours | number:'1.0-2' }}</strong>
+              <small *ngIf="item.predictedMaterials">{{ formatCop(item.estimatedMaterialCostCop) }}</small>
+            </article>
+          </div>
+          <div class="empty-state" *ngIf="recentPredictions.length === 0">
+            Aun no hay predicciones recientes.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="activeSection === 'evm'" class="panel">
+      <div class="status">
+        <strong>Paso 3:</strong>
+        Elige un proyecto con prediccion ya hecha. Si ese proyecto ya tiene EVM guardado, no se permite repetir el calculo.
+      </div>
+
+      <div class="form-card">
+        <div class="form-grid">
+          <label>
+            <span>Proyecto</span>
+            <select [(ngModel)]="evmSelection.projectId">
+              <option value="">Selecciona un proyecto</option>
+              <option *ngFor="let item of projects" [value]="item.projectId">
+                {{ item.name }} - Materiales {{ item.hasMaterialsPrediction ? 'Si' : 'No' }} - Mano de obra {{ item.hasLaborPrediction ? 'Si' : 'No' }} - EVM {{ item.hasEvm ? 'Si' : 'No' }}
+              </option>
+            </select>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="button" (click)="calculateEvm()">Calcular EVM</button>
+        </div>
+      </div>
+
+      <div class="chart-card metrics-card" *ngIf="latest">
+        <h3>Indicadores EVM</h3>
+        <p>PV, EV, AC, CPI y SPI del proyecto seleccionado.</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!latest">
+        Selecciona un proyecto para calcular o revisar sus indicadores EVM.
+      </div>
+
+      <div class="cards" *ngIf="latest">
+        <article>
+          <p>PV</p>
+          <h3>{{ formatCop(latest.pv) }}</h3>
+        </article>
+        <article>
+          <p>EV</p>
+          <h3>{{ formatCop(latest.ev) }}</h3>
+        </article>
+        <article>
+          <p>AC</p>
+          <h3>{{ formatCop(latest.ac) }}</h3>
+        </article>
+        <article>
+          <p>CPI / SPI</p>
+          <h3>{{ latest.cpi | number:'1.2-4' }} / {{ latest.spi | number:'1.2-4' }}</h3>
+        </article>
+      </div>
+
+      <div class="chart-card" *ngIf="selectedEvmDetail">
+        <h3>Detalle EVM</h3>
+        <div class="detail-grid">
+          <div>
+            <span>Proyecto</span>
+            <strong>{{ selectedEvmDetail.projectName }}</strong>
+          </div>
+          <div>
+            <span>Registro del proyecto</span>
+            <strong>{{ selectedEvmDetail.type }} / {{ selectedEvmDetail.location }}</strong>
+          </div>
+          <div>
+            <span>Periodo</span>
+            <strong>{{ asDateTime(selectedEvmDetail.periodDateUtc) }}</strong>
+          </div>
+          <div>
+            <span>Area / duracion</span>
+            <strong>{{ selectedEvmDetail.areaM2 }} m2 / {{ selectedEvmDetail.durationMonths }} meses</strong>
+          </div>
+          <div>
+            <span>Costo base</span>
+            <strong>{{ formatCop(selectedEvmDetail.baseCostCop) }}</strong>
+          </div>
+          <div>
+            <span>PV / EV / AC</span>
+            <strong>{{ formatCop(selectedEvmDetail.pv) }} / {{ formatCop(selectedEvmDetail.ev) }} / {{ formatCop(selectedEvmDetail.ac) }}</strong>
+          </div>
+          <div>
+            <span>CPI / SPI</span>
+            <strong>{{ selectedEvmDetail.cpi | number:'1.2-4' }} / {{ selectedEvmDetail.spi | number:'1.2-4' }}</strong>
+          </div>
+          <div>
+            <span>Presupuesto</span>
+            <strong>{{ selectedEvmDetail.costInterpretation }}</strong>
+          </div>
+          <div>
+            <span>Cronograma</span>
+            <strong>{{ selectedEvmDetail.scheduleInterpretation }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3>EVM recientes</h3>
+        <div class="recent-predictions" *ngIf="recentEvm.length > 0">
+          <article class="recent-card selectable" *ngFor="let item of recentEvm" (click)="selectEvmDetail(item)">
+            <p>{{ item.projectName }}</p>
+            <h4>{{ asDateTime(item.createdAtUtc) }}</h4>
+            <strong>PV / EV / AC: {{ formatCop(item.pv) }} / {{ formatCop(item.ev) }} / {{ formatCop(item.ac) }}</strong>
+            <small>CPI {{ item.cpi | number:'1.2-4' }} / SPI {{ item.spi | number:'1.2-4' }}</small>
+          </article>
+        </div>
+        <div class="empty-state" *ngIf="recentEvm.length === 0">
+          Aun no hay registros EVM recientes.
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="activeSection === 'historial'" class="history">
+      <div class="history-grid">
+        <div class="chart-card">
+          <h3>Historial de predicciones y EVM</h3>
+          <div class="empty-state" *ngIf="!selectedProject">
+            Selecciona un proyecto para ver su historial.
+          </div>
+          <div class="timeline" *ngIf="selectedProject && actionHistory.length > 0">
+            <article *ngFor="let item of actionHistory" class="timeline-item">
+              <p>{{ item.title }}</p>
+              <h4>{{ asDateTime(item.occurredAtUtc) }}</h4>
+              <small>{{ item.summary }}</small>
+            </article>
+          </div>
+          <div class="empty-state" *ngIf="selectedProject && actionHistory.length === 0">
+            Este proyecto aun no tiene predicciones ni EVM registrados.
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Proyectos registrados</h3>
+          <div class="project-list" *ngIf="projects.length > 0">
+            <button type="button" class="project-list-item" *ngFor="let item of projects" (click)="viewProject(item)">
+              <strong>{{ item.name }}</strong>
+              <span>{{ item.type }} / {{ item.location }} / {{ item.areaM2 }} m2</span>
+              <small>Prediccion: {{ item.hasPrediction ? 'Si' : 'No' }} | EVM: {{ item.hasEvm ? 'Si' : 'No' }}</small>
+            </button>
+          </div>
+          <div class="empty-state" *ngIf="projects.length === 0">
+            Aun no hay proyectos registrados.
+          </div>
+        </div>
+      </div>
+
+      <table *ngIf="selectedProject && history.length > 0">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>PV</th>
+            <th>EV</th>
+            <th>AC</th>
+            <th>CPI</th>
+            <th>SPI</th>
+            <th>Presupuesto</th>
+            <th>Cronograma</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of history">
+            <td>{{ asDate(row.periodDateUtc) }}</td>
+            <td>{{ formatCop(row.pv) }}</td>
+            <td>{{ formatCop(row.ev) }}</td>
+            <td>{{ formatCop(row.ac) }}</td>
+            <td>{{ row.cpi | number:'1.2-4' }}</td>
+            <td>{{ row.spi | number:'1.2-4' }}</td>
+            <td>{{ row.costInterpretation }}</td>
+            <td>{{ row.scheduleInterpretation }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="selectedProject && history.length === 0">
+        Este proyecto no tiene historial EVM.
+      </div>
+    </section>
+  </main>
+</div>
 
 <router-outlet />

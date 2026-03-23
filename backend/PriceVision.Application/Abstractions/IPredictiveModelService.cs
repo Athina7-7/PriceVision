@@ -6,5 +6,5 @@ namespace PriceVision.Application.Abstractions;
 public interface IPredictiveModelService
 {
     PredictionResult Predict(PredictionRequest request);
-    Prediction BuildPredictionEntity(PredictionRequest request, PredictionResult result);
+    Prediction BuildPredictionEntity(PredictionRequest request, PredictionResult result, bool predictedMaterials = true, bool predictedLabor = true);
 }
