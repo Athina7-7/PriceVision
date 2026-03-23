@@ -10,6 +10,8 @@ import {
   EvmSummaryResponse,
   EvmCalculationResponse,
   EvmHistoryPoint,
+  FinancialPredictionResponse,
+  FinancialPredictionSummaryResponse,
   PredictionHistoryResponse,
   ProjectActionHistoryItem,
   ProjectPredictionResponse,
@@ -43,8 +45,10 @@ export class AppComponent implements OnInit {
   recentPredictions: PredictionHistoryResponse[] = [];
   recentEvm: EvmSummaryResponse[] = [];
   selectedPredictionDetail: PredictionHistoryResponse | null = null;
+  selectedFinancialDetail: FinancialPredictionSummaryResponse | null = null;
   selectedEvmDetail: EvmSummaryResponse | null = null;
   validationWarnings: ProjectValidationWarningResponse[] = [];
+  recentFinancialPredictions: FinancialPredictionSummaryResponse[] = [];
 
   form = {
     name: '',
@@ -81,6 +85,7 @@ export class AppComponent implements OnInit {
 
     this.loadProjects();
     this.loadRecentPredictions();
+    this.loadRecentFinancialPredictions();
     this.loadRecentEvm();
   }
 
@@ -275,6 +280,53 @@ export class AppComponent implements OnInit {
     });
   }
 
+  createFinancialPrediction(): void {
+    if (!this.predictionSelection.projectId) {
+      this.error = 'Selecciona un proyecto para generar la prediccion financiera.';
+      this.success = '';
+      return;
+    }
+
+    const project = this.projects.find((item) => item.projectId === this.predictionSelection.projectId);
+    if (!project) {
+      this.error = 'No se encontro el proyecto seleccionado.';
+      this.success = '';
+      return;
+    }
+
+    if (!project.hasMaterialsPrediction || !project.hasLaborPrediction) {
+      this.error = 'El proyecto necesita predicciones de materiales y mano de obra antes de la prediccion financiera.';
+      this.success = '';
+      return;
+    }
+
+    if (project.hasFinancialPrediction) {
+      this.error = 'Ese proyecto ya tiene una prediccion financiera registrada.';
+      this.success = '';
+      return;
+    }
+
+    this.loading = true;
+    this.error = '';
+    this.success = '';
+
+    this.apiService.createFinancialPredictionForProject(project.projectId).subscribe({
+      next: (result: FinancialPredictionResponse) => {
+        this.selectedFinancialDetail = result;
+        this.success = 'Prediccion financiera generada correctamente.';
+        this.loading = false;
+        this.activeSection = 'prediccion';
+        this.loadProjects(result.projectId);
+        this.loadActionHistory(result.projectId);
+        this.loadRecentFinancialPredictions();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.error = err?.error?.error ?? 'No fue posible generar la prediccion financiera.';
+      }
+    });
+  }
+
   loadProjects(selectProjectId?: string): void {
     this.apiService.getRecentProjects(30).subscribe({
       next: (items) => {
@@ -307,6 +359,20 @@ export class AppComponent implements OnInit {
       },
       error: () => {
         this.recentPredictions = [];
+      }
+    });
+  }
+
+  loadRecentFinancialPredictions(): void {
+    this.apiService.getRecentFinancialPredictions(8).subscribe({
+      next: (items) => {
+        this.recentFinancialPredictions = items;
+        if (!this.selectedFinancialDetail && items.length > 0) {
+          this.selectedFinancialDetail = items[0];
+        }
+      },
+      error: () => {
+        this.recentFinancialPredictions = [];
       }
     });
   }
@@ -350,6 +416,12 @@ export class AppComponent implements OnInit {
     this.evmSelection.projectId = item.projectId;
     this.selectedProject = this.projects.find((project) => project.projectId === item.projectId) ?? this.selectedProject;
     this.loadEvmHistory(item.projectId);
+  }
+
+  selectFinancialDetail(item: FinancialPredictionSummaryResponse): void {
+    this.selectedFinancialDetail = item;
+    this.predictionSelection.projectId = item.projectId;
+    this.selectedProject = this.projects.find((project) => project.projectId === item.projectId) ?? this.selectedProject;
   }
 
   loadActionHistory(projectId: string, showLoading = false): void {

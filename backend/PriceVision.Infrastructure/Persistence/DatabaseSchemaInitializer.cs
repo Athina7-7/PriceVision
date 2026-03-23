@@ -32,6 +32,7 @@ public static class DatabaseSchemaInitializer
             """;
 
         await dbContext.Database.ExecuteSqlRawAsync(createEvmTableSql, cancellationToken);
+        await EnsureFinancialPredictionsTableAsync(dbContext, cancellationToken);
     }
 
     private static async Task EnsureProjectsTableAsync(PriceVisionDbContext dbContext, CancellationToken cancellationToken)
@@ -114,5 +115,25 @@ public static class DatabaseSchemaInitializer
             alterCommand.CommandText = $"ALTER TABLE \"Predictions\" ADD COLUMN \"{columnName}\" {columnSqlType};";
             await alterCommand.ExecuteNonQueryAsync(cancellationToken);
         }
+    }
+
+    private static async Task EnsureFinancialPredictionsTableAsync(PriceVisionDbContext dbContext, CancellationToken cancellationToken)
+    {
+        const string createFinancialPredictionsSql = """
+            CREATE TABLE IF NOT EXISTS "FinancialPredictions" (
+                "Id" TEXT NOT NULL CONSTRAINT "PK_FinancialPredictions" PRIMARY KEY,
+                "ProjectId" TEXT NOT NULL,
+                "EstimatedTotalCostCop" TEXT NOT NULL,
+                "MinimumEstimatedCostCop" TEXT NOT NULL,
+                "MaximumEstimatedCostCop" TEXT NOT NULL,
+                "ConfidencePercentage" REAL NOT NULL,
+                "ConfidenceLevel" TEXT NOT NULL,
+                "HistoricalAverageCostPerM2Cop" TEXT NOT NULL,
+                "LocationTrendFactor" TEXT NOT NULL,
+                "CreatedAtUtc" TEXT NOT NULL
+            );
+            """;
+
+        await dbContext.Database.ExecuteSqlRawAsync(createFinancialPredictionsSql, cancellationToken);
     }
 }

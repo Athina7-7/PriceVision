@@ -123,6 +123,7 @@
 
             <div class="actions">
               <button type="button" (click)="createPrediction()">Aplicar prediccion</button>
+              <button type="button" class="secondary" (click)="createFinancialPrediction()">Prediccion financiera</button>
             </div>
           </div>
 
@@ -194,6 +195,54 @@
               </div>
             </div>
           </div>
+
+          <div class="chart-card" *ngIf="selectedFinancialDetail">
+            <h3>Detalle de prediccion financiera</h3>
+            <div class="financial-hero">
+              <div>
+                <span>Proyecto</span>
+                <h4>{{ selectedFinancialDetail.projectName }}</h4>
+              </div>
+              <div>
+                <span>Fecha</span>
+                <strong>{{ asDateTime(selectedFinancialDetail.createdAtUtc) }}</strong>
+              </div>
+            </div>
+
+            <div class="financial-kpis">
+              <article>
+                <span>Costo total estimado</span>
+                <strong>{{ formatCop(selectedFinancialDetail.estimatedTotalCostCop) }}</strong>
+              </article>
+              <article>
+                <span>Rango estimado</span>
+                <strong>{{ formatCop(selectedFinancialDetail.minimumEstimatedCostCop) }} - {{ formatCop(selectedFinancialDetail.maximumEstimatedCostCop) }}</strong>
+              </article>
+              <article>
+                <span>Nivel de confianza</span>
+                <strong>{{ selectedFinancialDetail.confidencePercentage | number:'1.0-2' }}% / {{ selectedFinancialDetail.confidenceLevel }}</strong>
+              </article>
+            </div>
+
+            <div class="detail-grid financial-detail-grid">
+              <div>
+                <span>Area / tipo / ubicacion</span>
+                <strong>{{ selectedFinancialDetail.areaM2 }} m2 / {{ selectedFinancialDetail.type }} / {{ selectedFinancialDetail.location }}</strong>
+              </div>
+              <div>
+                <span>Duracion / costo base</span>
+                <strong>{{ selectedFinancialDetail.durationMonths }} meses / {{ formatCop(selectedFinancialDetail.baseCostCop) }}</strong>
+              </div>
+              <div>
+                <span>Historico por m2 / tendencia ubicacion</span>
+                <strong>{{ formatCop(selectedFinancialDetail.historicalAverageCostPerM2Cop) }} / x{{ selectedFinancialDetail.locationTrendFactor | number:'1.2-2' }}</strong>
+              </div>
+              <div>
+                <span>Lectura rapida</span>
+                <strong>La estimacion combina recursos previstos, historicos y tendencia geografica.</strong>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="chart-card">
@@ -210,6 +259,20 @@
           <div class="empty-state" *ngIf="recentPredictions.length === 0">
             Aun no hay predicciones recientes.
           </div>
+
+          <h3 class="subsection-title">Predicciones financieras recientes</h3>
+          <div class="recent-predictions" *ngIf="recentFinancialPredictions.length > 0">
+            <article class="recent-card selectable" *ngFor="let item of recentFinancialPredictions" (click)="selectFinancialDetail(item)">
+              <p>{{ item.projectName }}</p>
+              <h4>{{ asDateTime(item.createdAtUtc) }}</h4>
+              <strong>Costo total: {{ formatCop(item.estimatedTotalCostCop) }}</strong>
+              <small>Rango: {{ formatCop(item.minimumEstimatedCostCop) }} - {{ formatCop(item.maximumEstimatedCostCop) }}</small>
+              <small>Confianza: {{ item.confidencePercentage | number:'1.0-2' }}% / {{ item.confidenceLevel }}</small>
+            </article>
+          </div>
+          <div class="empty-state" *ngIf="recentFinancialPredictions.length === 0">
+            Aun no hay predicciones financieras recientes.
+          </div>
         </div>
       </div>
     </section>
@@ -220,106 +283,110 @@
         Elige un proyecto con prediccion ya hecha. Si ese proyecto ya tiene EVM guardado, no se permite repetir el calculo.
       </div>
 
-      <div class="form-card">
-        <div class="form-grid">
-          <label>
-            <span>Proyecto</span>
-            <select [(ngModel)]="evmSelection.projectId">
-              <option value="">Selecciona un proyecto</option>
-              <option *ngFor="let item of projects" [value]="item.projectId">
-                {{ item.name }} - Materiales {{ item.hasMaterialsPrediction ? 'Si' : 'No' }} - Mano de obra {{ item.hasLaborPrediction ? 'Si' : 'No' }} - EVM {{ item.hasEvm ? 'Si' : 'No' }}
-              </option>
-            </select>
-          </label>
+      <div class="prediction-layout">
+        <div>
+          <div class="form-card">
+            <div class="form-grid">
+              <label>
+                <span>Proyecto</span>
+                <select [(ngModel)]="evmSelection.projectId">
+                  <option value="">Selecciona un proyecto</option>
+                  <option *ngFor="let item of projects" [value]="item.projectId">
+                    {{ item.name }} - Materiales {{ item.hasMaterialsPrediction ? 'Si' : 'No' }} - Mano de obra {{ item.hasLaborPrediction ? 'Si' : 'No' }} - EVM {{ item.hasEvm ? 'Si' : 'No' }}
+                  </option>
+                </select>
+              </label>
+            </div>
+
+            <div class="actions">
+              <button type="button" (click)="calculateEvm()">Calcular EVM</button>
+            </div>
+          </div>
+
+          <div class="chart-card metrics-card" *ngIf="latest">
+            <h3>Indicadores EVM</h3>
+            <p>PV, EV, AC, CPI y SPI del proyecto seleccionado.</p>
+          </div>
+
+          <div class="empty-state" *ngIf="!latest">
+            Selecciona un proyecto para calcular o revisar sus indicadores EVM.
+          </div>
+
+          <div class="cards" *ngIf="latest">
+            <article>
+              <p>PV</p>
+              <h3>{{ formatCop(latest.pv) }}</h3>
+            </article>
+            <article>
+              <p>EV</p>
+              <h3>{{ formatCop(latest.ev) }}</h3>
+            </article>
+            <article>
+              <p>AC</p>
+              <h3>{{ formatCop(latest.ac) }}</h3>
+            </article>
+            <article>
+              <p>CPI / SPI</p>
+              <h3>{{ latest.cpi | number:'1.2-4' }} / {{ latest.spi | number:'1.2-4' }}</h3>
+            </article>
+          </div>
+
+          <div class="chart-card" *ngIf="selectedEvmDetail">
+            <h3>Detalle EVM</h3>
+            <div class="detail-grid">
+              <div>
+                <span>Proyecto</span>
+                <strong>{{ selectedEvmDetail.projectName }}</strong>
+              </div>
+              <div>
+                <span>Registro del proyecto</span>
+                <strong>{{ selectedEvmDetail.type }} / {{ selectedEvmDetail.location }}</strong>
+              </div>
+              <div>
+                <span>Periodo</span>
+                <strong>{{ asDateTime(selectedEvmDetail.periodDateUtc) }}</strong>
+              </div>
+              <div>
+                <span>Area / duracion</span>
+                <strong>{{ selectedEvmDetail.areaM2 }} m2 / {{ selectedEvmDetail.durationMonths }} meses</strong>
+              </div>
+              <div>
+                <span>Costo base</span>
+                <strong>{{ formatCop(selectedEvmDetail.baseCostCop) }}</strong>
+              </div>
+              <div>
+                <span>PV / EV / AC</span>
+                <strong>{{ formatCop(selectedEvmDetail.pv) }} / {{ formatCop(selectedEvmDetail.ev) }} / {{ formatCop(selectedEvmDetail.ac) }}</strong>
+              </div>
+              <div>
+                <span>CPI / SPI</span>
+                <strong>{{ selectedEvmDetail.cpi | number:'1.2-4' }} / {{ selectedEvmDetail.spi | number:'1.2-4' }}</strong>
+              </div>
+              <div>
+                <span>Presupuesto</span>
+                <strong>{{ selectedEvmDetail.costInterpretation }}</strong>
+              </div>
+              <div>
+                <span>Cronograma</span>
+                <strong>{{ selectedEvmDetail.scheduleInterpretation }}</strong>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="actions">
-          <button type="button" (click)="calculateEvm()">Calcular EVM</button>
-        </div>
-      </div>
-
-      <div class="chart-card metrics-card" *ngIf="latest">
-        <h3>Indicadores EVM</h3>
-        <p>PV, EV, AC, CPI y SPI del proyecto seleccionado.</p>
-      </div>
-
-      <div class="empty-state" *ngIf="!latest">
-        Selecciona un proyecto para calcular o revisar sus indicadores EVM.
-      </div>
-
-      <div class="cards" *ngIf="latest">
-        <article>
-          <p>PV</p>
-          <h3>{{ formatCop(latest.pv) }}</h3>
-        </article>
-        <article>
-          <p>EV</p>
-          <h3>{{ formatCop(latest.ev) }}</h3>
-        </article>
-        <article>
-          <p>AC</p>
-          <h3>{{ formatCop(latest.ac) }}</h3>
-        </article>
-        <article>
-          <p>CPI / SPI</p>
-          <h3>{{ latest.cpi | number:'1.2-4' }} / {{ latest.spi | number:'1.2-4' }}</h3>
-        </article>
-      </div>
-
-      <div class="chart-card" *ngIf="selectedEvmDetail">
-        <h3>Detalle EVM</h3>
-        <div class="detail-grid">
-          <div>
-            <span>Proyecto</span>
-            <strong>{{ selectedEvmDetail.projectName }}</strong>
+        <div class="chart-card">
+          <h3>EVM recientes</h3>
+          <div class="recent-predictions" *ngIf="recentEvm.length > 0">
+            <article class="recent-card selectable" *ngFor="let item of recentEvm" (click)="selectEvmDetail(item)">
+              <p>{{ item.projectName }}</p>
+              <h4>{{ asDateTime(item.createdAtUtc) }}</h4>
+              <strong>PV / EV / AC: {{ formatCop(item.pv) }} / {{ formatCop(item.ev) }} / {{ formatCop(item.ac) }}</strong>
+              <small>CPI {{ item.cpi | number:'1.2-4' }} / SPI {{ item.spi | number:'1.2-4' }}</small>
+            </article>
           </div>
-          <div>
-            <span>Registro del proyecto</span>
-            <strong>{{ selectedEvmDetail.type }} / {{ selectedEvmDetail.location }}</strong>
+          <div class="empty-state" *ngIf="recentEvm.length === 0">
+            Aun no hay registros EVM recientes.
           </div>
-          <div>
-            <span>Periodo</span>
-            <strong>{{ asDateTime(selectedEvmDetail.periodDateUtc) }}</strong>
-          </div>
-          <div>
-            <span>Area / duracion</span>
-            <strong>{{ selectedEvmDetail.areaM2 }} m2 / {{ selectedEvmDetail.durationMonths }} meses</strong>
-          </div>
-          <div>
-            <span>Costo base</span>
-            <strong>{{ formatCop(selectedEvmDetail.baseCostCop) }}</strong>
-          </div>
-          <div>
-            <span>PV / EV / AC</span>
-            <strong>{{ formatCop(selectedEvmDetail.pv) }} / {{ formatCop(selectedEvmDetail.ev) }} / {{ formatCop(selectedEvmDetail.ac) }}</strong>
-          </div>
-          <div>
-            <span>CPI / SPI</span>
-            <strong>{{ selectedEvmDetail.cpi | number:'1.2-4' }} / {{ selectedEvmDetail.spi | number:'1.2-4' }}</strong>
-          </div>
-          <div>
-            <span>Presupuesto</span>
-            <strong>{{ selectedEvmDetail.costInterpretation }}</strong>
-          </div>
-          <div>
-            <span>Cronograma</span>
-            <strong>{{ selectedEvmDetail.scheduleInterpretation }}</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="chart-card">
-        <h3>EVM recientes</h3>
-        <div class="recent-predictions" *ngIf="recentEvm.length > 0">
-          <article class="recent-card selectable" *ngFor="let item of recentEvm" (click)="selectEvmDetail(item)">
-            <p>{{ item.projectName }}</p>
-            <h4>{{ asDateTime(item.createdAtUtc) }}</h4>
-            <strong>PV / EV / AC: {{ formatCop(item.pv) }} / {{ formatCop(item.ev) }} / {{ formatCop(item.ac) }}</strong>
-            <small>CPI {{ item.cpi | number:'1.2-4' }} / SPI {{ item.spi | number:'1.2-4' }}</small>
-          </article>
-        </div>
-        <div class="empty-state" *ngIf="recentEvm.length === 0">
-          Aun no hay registros EVM recientes.
         </div>
       </div>
     </section>

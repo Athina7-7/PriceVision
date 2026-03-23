@@ -7,6 +7,7 @@ public sealed class PriceVisionDbContext(DbContextOptions<PriceVisionDbContext> 
 {
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<Prediction> Predictions => Set<Prediction>();
+    public DbSet<FinancialPrediction> FinancialPredictions => Set<FinancialPrediction>();
     public DbSet<EvmRecord> EvmRecords => Set<EvmRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -45,6 +46,20 @@ public sealed class PriceVisionDbContext(DbContextOptions<PriceVisionDbContext> 
             entity.Property(x => x.ScheduleInterpretation).HasMaxLength(120).IsRequired();
             entity.HasIndex(x => x.ProjectId);
             entity.HasIndex(x => x.PeriodDateUtc);
+        });
+
+        modelBuilder.Entity<FinancialPrediction>(entity =>
+        {
+            entity.ToTable("FinancialPredictions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.EstimatedTotalCostCop).HasPrecision(18, 2);
+            entity.Property(x => x.MinimumEstimatedCostCop).HasPrecision(18, 2);
+            entity.Property(x => x.MaximumEstimatedCostCop).HasPrecision(18, 2);
+            entity.Property(x => x.HistoricalAverageCostPerM2Cop).HasPrecision(18, 2);
+            entity.Property(x => x.LocationTrendFactor).HasPrecision(18, 4);
+            entity.Property(x => x.ConfidenceLevel).HasMaxLength(30).IsRequired();
+            entity.HasIndex(x => x.ProjectId);
+            entity.HasIndex(x => x.CreatedAtUtc);
         });
     }
 }
