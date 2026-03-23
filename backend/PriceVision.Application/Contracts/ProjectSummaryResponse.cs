@@ -12,4 +12,5 @@ public sealed record ProjectSummaryResponse(
     bool HasPrediction,
     bool HasMaterialsPrediction,
     bool HasLaborPrediction,
+    bool HasFinancialPrediction,
     bool HasEvm);
