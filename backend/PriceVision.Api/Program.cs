@@ -6,6 +6,10 @@ using PriceVision.Infrastructure.Persistence;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.ConfigureHttpJsonOptions(options =>   
+{                                                       
+    options.SerializerOptions.PropertyNamingPolicy = null; 
+});                                                     
 builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -27,7 +31,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// Crear DB si no existe
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<PriceVisionDbContext>();
@@ -42,7 +45,7 @@ app.UseHttpsRedirection();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 
 
-// -------------------- PREDICTIONS REALES --------------------
+// -------------------- PREDICTIONS --------------------
 app.MapPost("/api/predictions/train", (TrainModelRequest? request, IModelTrainingService trainingService) =>
 {
     var rows = request?.Rows ?? 3000;
@@ -99,26 +102,9 @@ app.MapGet("/api/predictions", async (
 });
 
 
-// ==========================================================
-// 🚀 ENDPOINTS PARA TESTS (CORREGIDOS)
-// ==========================================================
-
-// -------------------- MODELO --------------------
-public sealed record CreateProjectRequest(
-    string? Name,
-    double Area,
-    int Duration,
-    double Cost,
-    string? Type,
-    string? Location
-);
-
 // -------------------- PROJECTS --------------------
 app.MapPost("/api/projects", (CreateProjectRequest request) =>
 {
-    if (request == null)
-        return Results.BadRequest(new { error = "Project is required" });
-
     if (string.IsNullOrWhiteSpace(request.Name))
         return Results.BadRequest(new { error = "Name is required" });
 
@@ -134,10 +120,19 @@ app.MapPost("/api/projects", (CreateProjectRequest request) =>
     if (string.IsNullOrWhiteSpace(request.Type) || string.IsNullOrWhiteSpace(request.Location))
         return Results.BadRequest(new { error = "Type and Location are required" });
 
+    var warnings = new List<string>();
+
+    if (request.Cost > 5_000_000_000)
+        warnings.Add("El costo ingresado es inusualmente alto.");
+
+    if (request.Area > 1000 && request.Duration < 6)
+        warnings.Add("La duracion parece muy corta para el area del proyecto.");
+
     return Results.Ok(new
     {
         message = "Project created successfully",
-        id = Guid.NewGuid()
+        id = Guid.NewGuid(),
+        warnings
     });
 });
 
@@ -204,3 +199,5 @@ public sealed record CreateProjectRequest(
     string? Type,
     string? Location
 );
+
+public partial class Program { }

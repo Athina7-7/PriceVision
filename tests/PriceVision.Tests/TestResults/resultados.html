@@ -1,0 +1,600 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PriceVision — Reporte de Pruebas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c202b;
+    --border: #252a36;
+    --pass: #22c55e;
+    --pass-dim: #14532d22;
+    --fail: #ef4444;
+    --fail-dim: #7f1d1d22;
+    --accent: #6366f1;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #1a1d2e 0%, #0d0f14 60%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 64px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, #6366f133 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .badge-project {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    font-family: var(--mono);
+  }
+
+  .summary-pills {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 32px;
+  }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid;
+  }
+
+  .pill-total { background: #1c202b; border-color: var(--border); color: var(--text); }
+  .pill-pass  { background: var(--pass-dim); border-color: #22c55e44; color: var(--pass); }
+  .pill-fail  { background: var(--fail-dim); border-color: #ef444444; color: var(--fail); }
+  .pill-time  { background: #1c202b; border-color: var(--border); color: var(--muted); }
+
+  .pill-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+  /* PROGRESS BAR */
+  .progress-wrap {
+    margin: 32px 64px 0;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-family: var(--mono);
+  }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--pass), #4ade80);
+    border-radius: 100px;
+    transition: width 1s ease;
+    width: 100%;
+  }
+
+  /* CONTENT */
+  .content { padding: 48px 64px 0; }
+
+  .section { margin-bottom: 40px; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-number {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent2);
+    background: #6366f115;
+    border: 1px solid #6366f130;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .section-count {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* TABLE */
+  .test-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .test-table thead tr {
+    background: var(--surface2);
+  }
+
+  .test-table th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  .test-table tbody tr {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .test-table tbody tr:hover { background: var(--surface2); }
+
+  .test-table td {
+    padding: 12px 16px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .cp-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #6366f115;
+    color: var(--accent2);
+    border: 1px solid #6366f125;
+    white-space: nowrap;
+  }
+
+  .test-name { color: var(--text); font-weight: 400; }
+  .test-desc { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  .endpoint {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #94a3b8;
+    background: #1e2330;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .duration {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .status-pass, .status-fail {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+
+  .status-pass { background: var(--pass-dim); color: var(--pass); border: 1px solid #22c55e33; }
+  .status-fail { background: var(--fail-dim); color: var(--fail); border: 1px solid #ef444433; }
+
+  /* FOOTER */
+  .footer {
+    margin: 48px 64px 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .footer-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .footer-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--pass);
+    background: var(--pass-dim);
+    border: 1px solid #22c55e33;
+    padding: 4px 12px;
+    border-radius: 100px;
+  }
+
+  @media (max-width: 768px) {
+    header, .progress-wrap, .content, .footer { padding-left: 24px; padding-right: 24px; }
+    h1 { font-size: 24px; }
+    .test-table th:nth-child(3),
+    .test-table td:nth-child(3) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <div class="badge-project">PriceVision · ASP.NET Core + xUnit</div>
+      <h1>Reporte de Pruebas Automatizadas</h1>
+      <div class="subtitle">Ejecutado el 28 mar 2026 · 16:07:48 · por Pauli</div>
+    </div>
+  </div>
+  <div class="summary-pills">
+    <div class="pill pill-total"><span class="pill-dot"></span> 22 pruebas totales</div>
+    <div class="pill pill-pass"><span class="pill-dot"></span> 22 exitosas</div>
+    <div class="pill pill-fail"><span class="pill-dot"></span> 0 fallidas</div>
+    <div class="pill pill-time">⏱ 5.5 s duración total</div>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span>Cobertura de casos de prueba</span>
+    <span>22 / 22 — 100%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill"></div></div>
+</div>
+
+<div class="content">
+
+  <!-- US1 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">US-1</span>
+      <span class="section-title">Registro de Datos del Proyecto</span>
+      <span class="section-count">6 pruebas</span>
+    </div>
+    <table class="test-table">
+      <thead><tr>
+        <th>Caso</th><th>Descripción</th><th>Endpoint</th><th>Duración</th><th>Resultado</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="cp-badge">CP-01</span></td>
+          <td><div class="test-name">Registro exitoso con datos válidos</div><div class="test-desc">Retorna 200 con ID y mensaje de confirmación</div></td>
+          <td><span class="endpoint">POST /api/projects</span></td>
+          <td class="duration">18 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-02</span></td>
+          <td><div class="test-name">Nombre vacío retorna error</div><div class="test-desc">Valida campo Name obligatorio</div></td>
+          <td><span class="endpoint">POST /api/projects</span></td>
+          <td class="duration">2647 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-02b</span></td>
+          <td><div class="test-name">Type y Location vacíos</div><div class="test-desc">Valida campos de clasificación obligatorios</div></td>
+          <td><span class="endpoint">POST /api/projects</span></td>
+          <td class="duration">10 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-03</span></td>
+          <td><div class="test-name">Área igual a cero</div><div class="test-desc">Error: "Area must be greater than 0"</div></td>
+          <td><span class="endpoint">POST /api/projects</span></td>
+          <td class="duration">54 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-03b</span></td>
+          <td><div class="test-name">Duración negativa</div><div class="test-desc">Error: "Duration must be greater than 0"</div></td>
+          <td><span class="endpoint">POST /api/projects</span></td>
+          <td class="duration">20 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-03c</span></td>
+          <td><div class="test-name">Costo negativo</div><div class="test-desc">Error: "Cost cannot be negative"</div></td>
+          <td><span class="endpoint">POST /api/projects</span></td>
+          <td class="duration">81 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- US2 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">US-2</span>
+      <span class="section-title">Validación de Datos</span>
+      <span class="section-count">2 pruebas</span>
+    </div>
+    <table class="test-table">
+      <thead><tr>
+        <th>Caso</th><th>Descripción</th><th>Endpoint</th><th>Duración</th><th>Resultado</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="cp-badge">CP-04</span></td>
+          <td><div class="test-name">Costo fuera de rango genera advertencia</div><div class="test-desc">Envío permitido con campo warnings no vacío</div></td>
+          <td><span class="endpoint">POST /api/projects</span></td>
+          <td class="duration">63 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-05</span></td>
+          <td><div class="test-name">Duración inconsistente con área</div><div class="test-desc">Alerta visual por heurística de duración mínima</div></td>
+          <td><span class="endpoint">POST /api/projects</span></td>
+          <td class="duration">2656 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- US3 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">US-3</span>
+      <span class="section-title">Predicción de Recursos</span>
+      <span class="section-count">3 pruebas</span>
+    </div>
+    <table class="test-table">
+      <thead><tr>
+        <th>Caso</th><th>Descripción</th><th>Endpoint</th><th>Duración</th><th>Resultado</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="cp-badge">CP-06</span></td>
+          <td><div class="test-name">Predicción retorna materiales y mano de obra</div><div class="test-desc">JSON con campos materials y labor mayores que 0</div></td>
+          <td><span class="endpoint">POST /api/predict/resources</span></td>
+          <td class="duration">80 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-07</span></td>
+          <td><div class="test-name">Tiempo de respuesta menor a 5 segundos</div><div class="test-desc">Medido con Stopwatch: 2.63 s</div></td>
+          <td><span class="endpoint">POST /api/predict/resources</span></td>
+          <td class="duration">2631 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-08</span></td>
+          <td><div class="test-name">Respuesta exitosa del endpoint</div><div class="test-desc">Verifica estructura del JSON de respuesta</div></td>
+          <td><span class="endpoint">POST /api/predict/resources</span></td>
+          <td class="duration">64 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- US5 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">US-5</span>
+      <span class="section-title">Predicción de Costos</span>
+      <span class="section-count">2 pruebas</span>
+    </div>
+    <table class="test-table">
+      <thead><tr>
+        <th>Caso</th><th>Descripción</th><th>Endpoint</th><th>Duración</th><th>Resultado</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="cp-badge">CP-09</span></td>
+          <td><div class="test-name">Retorna costo estimado mayor que cero</div><div class="test-desc">Campo estimatedCost presente y positivo</div></td>
+          <td><span class="endpoint">POST /api/predict/cost</span></td>
+          <td class="duration">2647 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-10</span></td>
+          <td><div class="test-name">Rango min/max y nivel de confianza</div><div class="test-desc">min &lt; max, confidence entre 0 y 1</div></td>
+          <td><span class="endpoint">POST /api/predict/cost</span></td>
+          <td class="duration">64 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- US6 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">US-6</span>
+      <span class="section-title">Navegación y Disponibilidad</span>
+      <span class="section-count">3 pruebas</span>
+    </div>
+    <table class="test-table">
+      <thead><tr>
+        <th>Caso</th><th>Descripción</th><th>Endpoint</th><th>Duración</th><th>Resultado</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="cp-badge">CP-18</span></td>
+          <td><div class="test-name">Health check retorna status ok</div><div class="test-desc">Verificación de disponibilidad del sistema</div></td>
+          <td><span class="endpoint">GET /api/health</span></td>
+          <td class="duration">2648 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-18b</span></td>
+          <td><div class="test-name">Lista de proyectos accesible</div><div class="test-desc">Retorna array JSON con código 200</div></td>
+          <td><span class="endpoint">GET /api/projects</span></td>
+          <td class="duration">62 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-18c</span></td>
+          <td><div class="test-name">Lista de predicciones accesible</div><div class="test-desc">Retorna array JSON con código 200</div></td>
+          <td><span class="endpoint">GET /api/predictions</span></td>
+          <td class="duration">999 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- US7 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">US-7</span>
+      <span class="section-title">Métricas EVM</span>
+      <span class="section-count">3 pruebas</span>
+    </div>
+    <table class="test-table">
+      <thead><tr>
+        <th>Caso</th><th>Descripción</th><th>Endpoint</th><th>Duración</th><th>Resultado</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="cp-badge">CP-11</span></td>
+          <td><div class="test-name">Cálculo retorna PV, EV, AC, CPI, SPI</div><div class="test-desc">Todas las métricas EVM presentes en la respuesta</div></td>
+          <td><span class="endpoint">POST /api/evm</span></td>
+          <td class="duration">73 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-12</span></td>
+          <td><div class="test-name">Interpretación de desempeño</div><div class="test-desc">Campo status: "Under budget" / "Over budget"</div></td>
+          <td><span class="endpoint">POST /api/evm</span></td>
+          <td class="duration">2660 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">CP-13</span></td>
+          <td><div class="test-name">CPI y SPI son valores numéricos válidos</div><div class="test-desc">Ambos indicadores mayores que cero</div></td>
+          <td><span class="endpoint">POST /api/evm</span></td>
+          <td class="duration">77 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Predicciones adicionales -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">ADD</span>
+      <span class="section-title">Predicciones — Validaciones Adicionales</span>
+      <span class="section-count">3 pruebas</span>
+    </div>
+    <table class="test-table">
+      <thead><tr>
+        <th>Caso</th><th>Descripción</th><th>Endpoint</th><th>Duración</th><th>Resultado</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="cp-badge">ADD-01</span></td>
+          <td><div class="test-name">Área inválida en predicción</div><div class="test-desc">Error: "AreaM2 debe ser mayor que cero."</div></td>
+          <td><span class="endpoint">POST /api/predictions</span></td>
+          <td class="duration">16 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">ADD-02</span></td>
+          <td><div class="test-name">Type y Location faltantes en predicción</div><div class="test-desc">Error: "Type y Location son obligatorios."</div></td>
+          <td><span class="endpoint">POST /api/predictions</span></td>
+          <td class="duration">2649 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+        <tr>
+          <td><span class="cp-badge">ADD-03</span></td>
+          <td><div class="test-name">ID inexistente retorna 404</div><div class="test-desc">Predicción no encontrada en base de datos</div></td>
+          <td><span class="endpoint">GET /api/predictions/{id}</span></td>
+          <td class="duration">1050 ms</td>
+          <td><span class="status-pass">● Exitoso</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div class="footer-text">PriceVision.Api.Tests · xUnit 2.8.2 · .NET 10 · SQLite · 28 marzo 2026</div>
+  <div class="footer-badge">✓ 22/22 pruebas exitosas</div>
+</div>
+
+</body>
+</html>

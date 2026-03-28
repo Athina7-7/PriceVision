@@ -1,0 +1,263 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="ae6f7f5d-d7c9-4007-b39c-343bf2036a15" name="Pauli@DESKTOP-32NNFLH 2026-03-28 16:07:48" runUser="DESKTOP-32NNFLH\Pauli" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-03-28T16:07:48.9645775-05:00" queuing="2026-03-28T16:07:48.9645781-05:00" start="2026-03-28T16:07:44.1304121-05:00" finish="2026-03-28T16:07:50.1264110-05:00" />
+  <TestSettings name="default" id="ee0ebf5e-8f93-4aa8-84b5-115f600c33d6">
+    <Deployment runDeploymentRoot="Pauli_DESKTOP-32NNFLH_2026-03-28_16_07_48" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="d5fed04f-c7f9-4a34-9a57-1adc76adf996" testId="b6d2b8fd-b0e9-5657-51c3-f08a016d6663" testName="PriceVision.Api.Tests.PredictionTests.GetPrediction_UnknownId_ReturnsNotFound" computerName="DESKTOP-32NNFLH" duration="00:00:01.0503404" startTime="2026-03-28T16:07:49.8875852-05:00" endTime="2026-03-28T16:07:49.8875856-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d5fed04f-c7f9-4a34-9a57-1adc76adf996" />
+    <UnitTestResult executionId="ced090d5-e6b0-4d75-9157-600aaa728278" testId="6d2f33c8-fba1-af40-ebc9-745f6d20c025" testName="PriceVision.Api.Tests.EvmMetricsTests.CP11_EvmCalculation_ReturnsAllMetrics" computerName="DESKTOP-32NNFLH" duration="00:00:00.0725987" startTime="2026-03-28T16:07:48.9970005-05:00" endTime="2026-03-28T16:07:48.9970009-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ced090d5-e6b0-4d75-9157-600aaa728278" />
+    <UnitTestResult executionId="39f19ecb-5f48-4302-a370-914e24159509" testId="dd6fae4d-6caa-39b8-e115-c74f86bf78fc" testName="PriceVision.Api.Tests.ResourcePredictionTests.CP06_ResourcePrediction_ReturnsMaterialsAndLabor" computerName="DESKTOP-32NNFLH" duration="00:00:00.0798298" startTime="2026-03-28T16:07:48.9998960-05:00" endTime="2026-03-28T16:07:48.9998966-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="39f19ecb-5f48-4302-a370-914e24159509" />
+    <UnitTestResult executionId="1d129614-0efd-409c-866c-213d70af5ecb" testId="c2ae49b1-a01e-2337-ef5c-4bed4412999e" testName="PriceVision.Api.Tests.NavigationTests.CP18c_PredictionsListEndpoint_ReturnsOkArray" computerName="DESKTOP-32NNFLH" duration="00:00:00.9985983" startTime="2026-03-28T16:07:49.9126020-05:00" endTime="2026-03-28T16:07:49.9126024-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1d129614-0efd-409c-866c-213d70af5ecb" />
+    <UnitTestResult executionId="11f8c794-0edf-4548-a875-c001f52d4d12" testId="dae26cf3-4b49-f907-8e33-09fabcff6353" testName="PriceVision.Api.Tests.ResourcePredictionTests.CP08_ResourcePrediction_ReturnsSuccessResponse" computerName="DESKTOP-32NNFLH" duration="00:00:00.0640271" startTime="2026-03-28T16:07:48.9164083-05:00" endTime="2026-03-28T16:07:48.9164086-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="11f8c794-0edf-4548-a875-c001f52d4d12" />
+    <UnitTestResult executionId="69d6063a-b407-47b8-a9ad-b143781545ac" testId="30c74b36-3eef-1f1e-f7fb-6e94eab59e38" testName="PriceVision.Api.Tests.EvmMetricsTests.CP12_EvmCalculation_ReturnsStatusInterpretation" computerName="DESKTOP-32NNFLH" duration="00:00:02.6600035" startTime="2026-03-28T16:07:48.8489007-05:00" endTime="2026-03-28T16:07:48.8489008-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="69d6063a-b407-47b8-a9ad-b143781545ac" />
+    <UnitTestResult executionId="d22da51d-5adb-4a48-b1ad-d44517b74348" testId="ab36bc3d-8290-b071-d974-30ec6fe50e5c" testName="PriceVision.Api.Tests.ProjectRegistrationTests.CP01_ValidData_Returns200WithIdAndMessage" computerName="DESKTOP-32NNFLH" duration="00:00:00.0185459" startTime="2026-03-28T16:07:49.0349907-05:00" endTime="2026-03-28T16:07:49.0349910-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d22da51d-5adb-4a48-b1ad-d44517b74348" />
+    <UnitTestResult executionId="40d2ce5e-43d2-4e1b-9153-8e5d251c20d2" testId="92a441ad-97cd-1507-a809-774d715f36a9" testName="PriceVision.Api.Tests.DataValidationTests.CP04_HighCost_ReturnsOkWithWarning" computerName="DESKTOP-32NNFLH" duration="00:00:00.0626015" startTime="2026-03-28T16:07:48.9114888-05:00" endTime="2026-03-28T16:07:48.9114892-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="40d2ce5e-43d2-4e1b-9153-8e5d251c20d2" />
+    <UnitTestResult executionId="c4194cd9-ff83-4d83-9fa3-1ac21e30b2f8" testId="7208660b-f007-b516-831a-793fae8c853e" testName="PriceVision.Api.Tests.PredictionTests.Prediction_InvalidArea_ReturnsBadRequest" computerName="DESKTOP-32NNFLH" duration="00:00:00.0162532" startTime="2026-03-28T16:07:49.9062011-05:00" endTime="2026-03-28T16:07:49.9062012-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c4194cd9-ff83-4d83-9fa3-1ac21e30b2f8" />
+    <UnitTestResult executionId="f45ffed1-e42a-41cb-a23d-19aa3e62023d" testId="a00b6ef2-cd7b-59ed-98b7-6682d88c2024" testName="PriceVision.Api.Tests.ProjectRegistrationTests.CP02_EmptyName_ReturnsBadRequest" computerName="DESKTOP-32NNFLH" duration="00:00:02.6469951" startTime="2026-03-28T16:07:48.8445874-05:00" endTime="2026-03-28T16:07:48.8445876-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f45ffed1-e42a-41cb-a23d-19aa3e62023d" />
+    <UnitTestResult executionId="ddddc94d-1ab2-4559-a51b-1130ae08038e" testId="13907c4f-8d69-1fa9-8004-ec5d7f46ce80" testName="PriceVision.Api.Tests.ProjectRegistrationTests.CP03b_NegativeDuration_ReturnsBadRequest" computerName="DESKTOP-32NNFLH" duration="00:00:00.0197931" startTime="2026-03-28T16:07:49.0144981-05:00" endTime="2026-03-28T16:07:49.0144985-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ddddc94d-1ab2-4559-a51b-1130ae08038e" />
+    <UnitTestResult executionId="6d06426c-99be-433e-b6e6-e68159d2ee9d" testId="e947bcba-896d-f662-5ce5-1a38d010dd6e" testName="PriceVision.Api.Tests.NavigationTests.CP18_HealthEndpoint_ReturnsOk" computerName="DESKTOP-32NNFLH" duration="00:00:02.6476872" startTime="2026-03-28T16:07:48.8487193-05:00" endTime="2026-03-28T16:07:48.8487197-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6d06426c-99be-433e-b6e6-e68159d2ee9d" />
+    <UnitTestResult executionId="eab51aee-8b7b-48b1-840d-7e2f1808d2ee" testId="61763285-c70b-d563-4dc0-6724b7b7b6a5" testName="PriceVision.Api.Tests.ProjectRegistrationTests.CP02b_EmptyTypeAndLocation_ReturnsBadRequest" computerName="DESKTOP-32NNFLH" duration="00:00:00.0100690" startTime="2026-03-28T16:07:49.0469875-05:00" endTime="2026-03-28T16:07:49.0469879-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eab51aee-8b7b-48b1-840d-7e2f1808d2ee" />
+    <UnitTestResult executionId="b65380f1-a468-4128-a3bd-fc2e8fc8bcba" testId="32c0567b-1e8f-39c8-f5e6-d37d4e1882ad" testName="PriceVision.Api.Tests.ProjectRegistrationTests.CP03c_NegativeCost_ReturnsBadRequest" computerName="DESKTOP-32NNFLH" duration="00:00:00.0805372" startTime="2026-03-28T16:07:48.9937338-05:00" endTime="2026-03-28T16:07:48.9937340-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b65380f1-a468-4128-a3bd-fc2e8fc8bcba" />
+    <UnitTestResult executionId="c4122e2f-f7d5-4c38-a6f2-d5b459d60039" testId="a27b1536-77ef-5faa-cbe4-fcd9419204d7" testName="PriceVision.Api.Tests.NavigationTests.CP18b_ProjectsListEndpoint_ReturnsOkArray" computerName="DESKTOP-32NNFLH" duration="00:00:00.0620384" startTime="2026-03-28T16:07:48.9131388-05:00" endTime="2026-03-28T16:07:48.9131392-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c4122e2f-f7d5-4c38-a6f2-d5b459d60039" />
+    <UnitTestResult executionId="8619c4ec-b934-4bae-96b2-96658907c5e0" testId="48a49f7d-5b1e-9b87-89ba-9b7aaf921b69" testName="PriceVision.Api.Tests.ResourcePredictionTests.CP07_ResourcePrediction_RespondsUnderFiveSeconds" computerName="DESKTOP-32NNFLH" duration="00:00:02.6308712" startTime="2026-03-28T16:07:48.8267876-05:00" endTime="2026-03-28T16:07:48.8269125-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8619c4ec-b934-4bae-96b2-96658907c5e0" />
+    <UnitTestResult executionId="525a5ec0-9793-464c-ad75-16397669a1ef" testId="2e822177-0911-a9a5-4d92-93ad12db9aad" testName="PriceVision.Api.Tests.DataValidationTests.CP05_UnrealisticDuration_ReturnsWarning" computerName="DESKTOP-32NNFLH" duration="00:00:02.6556766" startTime="2026-03-28T16:07:48.8447358-05:00" endTime="2026-03-28T16:07:48.8447359-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="525a5ec0-9793-464c-ad75-16397669a1ef" />
+    <UnitTestResult executionId="fc5a96ec-795d-4bc6-a530-756b61f93a52" testId="c268142e-d0cc-6219-e371-00ee37c0cb6e" testName="PriceVision.Api.Tests.ProjectRegistrationTests.CP03_AreaIsZero_ReturnsBadRequestWithMessage" computerName="DESKTOP-32NNFLH" duration="00:00:00.0538979" startTime="2026-03-28T16:07:48.8979651-05:00" endTime="2026-03-28T16:07:48.8979654-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fc5a96ec-795d-4bc6-a530-756b61f93a52" />
+    <UnitTestResult executionId="56f6d632-4fb3-4fe0-a8a1-92a6e54402d6" testId="a74a5377-8db9-ee5c-d7bd-9461cfd36baa" testName="PriceVision.Api.Tests.CostPredictionTests.CP10_CostPrediction_ReturnsRangeAndConfidence" computerName="DESKTOP-32NNFLH" duration="00:00:00.0640718" startTime="2026-03-28T16:07:48.9161248-05:00" endTime="2026-03-28T16:07:48.9161255-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="56f6d632-4fb3-4fe0-a8a1-92a6e54402d6" />
+    <UnitTestResult executionId="d9c3c07b-fb99-4c34-b1ad-f858ad46eba6" testId="a491f9bb-1fd0-5a62-3cc5-575ac80b6907" testName="PriceVision.Api.Tests.CostPredictionTests.CP09_CostPrediction_ReturnsEstimatedCost" computerName="DESKTOP-32NNFLH" duration="00:00:02.6465427" startTime="2026-03-28T16:07:48.8430769-05:00" endTime="2026-03-28T16:07:48.8430774-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d9c3c07b-fb99-4c34-b1ad-f858ad46eba6" />
+    <UnitTestResult executionId="2285d49c-d2d0-46bc-9d76-c7c643268244" testId="170aee9b-c79b-fb36-5931-ee00940561d4" testName="PriceVision.Api.Tests.PredictionTests.Prediction_MissingTypeAndLocation_ReturnsBadRequest" computerName="DESKTOP-32NNFLH" duration="00:00:02.6490220" startTime="2026-03-28T16:07:48.8487686-05:00" endTime="2026-03-28T16:07:48.8487687-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2285d49c-d2d0-46bc-9d76-c7c643268244" />
+    <UnitTestResult executionId="0a651d8c-5dc2-40dd-86cb-2a99101c9e15" testId="629312b8-a029-2a89-e868-bac0e5f0a78f" testName="PriceVision.Api.Tests.EvmMetricsTests.CP13_EvmCalculation_CpiAndSpiAreValid" computerName="DESKTOP-32NNFLH" duration="00:00:00.0772650" startTime="2026-03-28T16:07:48.9265476-05:00" endTime="2026-03-28T16:07:48.9265477-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0a651d8c-5dc2-40dd-86cb-2a99101c9e15" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="PriceVision.Api.Tests.ProjectRegistrationTests.CP02b_EmptyTypeAndLocation_ReturnsBadRequest" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="61763285-c70b-d563-4dc0-6724b7b7b6a5">
+      <Execution id="eab51aee-8b7b-48b1-840d-7e2f1808d2ee" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.ProjectRegistrationTests" name="CP02b_EmptyTypeAndLocation_ReturnsBadRequest" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.ResourcePredictionTests.CP08_ResourcePrediction_ReturnsSuccessResponse" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="dae26cf3-4b49-f907-8e33-09fabcff6353">
+      <Execution id="11f8c794-0edf-4548-a875-c001f52d4d12" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.ResourcePredictionTests" name="CP08_ResourcePrediction_ReturnsSuccessResponse" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.NavigationTests.CP18b_ProjectsListEndpoint_ReturnsOkArray" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="a27b1536-77ef-5faa-cbe4-fcd9419204d7">
+      <Execution id="c4122e2f-f7d5-4c38-a6f2-d5b459d60039" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.NavigationTests" name="CP18b_ProjectsListEndpoint_ReturnsOkArray" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.ProjectRegistrationTests.CP03c_NegativeCost_ReturnsBadRequest" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="32c0567b-1e8f-39c8-f5e6-d37d4e1882ad">
+      <Execution id="b65380f1-a468-4128-a3bd-fc2e8fc8bcba" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.ProjectRegistrationTests" name="CP03c_NegativeCost_ReturnsBadRequest" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.DataValidationTests.CP05_UnrealisticDuration_ReturnsWarning" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="2e822177-0911-a9a5-4d92-93ad12db9aad">
+      <Execution id="525a5ec0-9793-464c-ad75-16397669a1ef" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.DataValidationTests" name="CP05_UnrealisticDuration_ReturnsWarning" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.ProjectRegistrationTests.CP02_EmptyName_ReturnsBadRequest" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="a00b6ef2-cd7b-59ed-98b7-6682d88c2024">
+      <Execution id="f45ffed1-e42a-41cb-a23d-19aa3e62023d" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.ProjectRegistrationTests" name="CP02_EmptyName_ReturnsBadRequest" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.CostPredictionTests.CP10_CostPrediction_ReturnsRangeAndConfidence" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="a74a5377-8db9-ee5c-d7bd-9461cfd36baa">
+      <Execution id="56f6d632-4fb3-4fe0-a8a1-92a6e54402d6" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.CostPredictionTests" name="CP10_CostPrediction_ReturnsRangeAndConfidence" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.EvmMetricsTests.CP13_EvmCalculation_CpiAndSpiAreValid" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="629312b8-a029-2a89-e868-bac0e5f0a78f">
+      <Execution id="0a651d8c-5dc2-40dd-86cb-2a99101c9e15" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.EvmMetricsTests" name="CP13_EvmCalculation_CpiAndSpiAreValid" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.ProjectRegistrationTests.CP03b_NegativeDuration_ReturnsBadRequest" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="13907c4f-8d69-1fa9-8004-ec5d7f46ce80">
+      <Execution id="ddddc94d-1ab2-4559-a51b-1130ae08038e" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.ProjectRegistrationTests" name="CP03b_NegativeDuration_ReturnsBadRequest" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.ProjectRegistrationTests.CP03_AreaIsZero_ReturnsBadRequestWithMessage" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="c268142e-d0cc-6219-e371-00ee37c0cb6e">
+      <Execution id="fc5a96ec-795d-4bc6-a530-756b61f93a52" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.ProjectRegistrationTests" name="CP03_AreaIsZero_ReturnsBadRequestWithMessage" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.PredictionTests.GetPrediction_UnknownId_ReturnsNotFound" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="b6d2b8fd-b0e9-5657-51c3-f08a016d6663">
+      <Execution id="d5fed04f-c7f9-4a34-9a57-1adc76adf996" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.PredictionTests" name="GetPrediction_UnknownId_ReturnsNotFound" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.PredictionTests.Prediction_InvalidArea_ReturnsBadRequest" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="7208660b-f007-b516-831a-793fae8c853e">
+      <Execution id="c4194cd9-ff83-4d83-9fa3-1ac21e30b2f8" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.PredictionTests" name="Prediction_InvalidArea_ReturnsBadRequest" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.EvmMetricsTests.CP12_EvmCalculation_ReturnsStatusInterpretation" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="30c74b36-3eef-1f1e-f7fb-6e94eab59e38">
+      <Execution id="69d6063a-b407-47b8-a9ad-b143781545ac" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.EvmMetricsTests" name="CP12_EvmCalculation_ReturnsStatusInterpretation" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.PredictionTests.Prediction_MissingTypeAndLocation_ReturnsBadRequest" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="170aee9b-c79b-fb36-5931-ee00940561d4">
+      <Execution id="2285d49c-d2d0-46bc-9d76-c7c643268244" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.PredictionTests" name="Prediction_MissingTypeAndLocation_ReturnsBadRequest" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.EvmMetricsTests.CP11_EvmCalculation_ReturnsAllMetrics" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="6d2f33c8-fba1-af40-ebc9-745f6d20c025">
+      <Execution id="ced090d5-e6b0-4d75-9157-600aaa728278" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.EvmMetricsTests" name="CP11_EvmCalculation_ReturnsAllMetrics" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.NavigationTests.CP18_HealthEndpoint_ReturnsOk" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="e947bcba-896d-f662-5ce5-1a38d010dd6e">
+      <Execution id="6d06426c-99be-433e-b6e6-e68159d2ee9d" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.NavigationTests" name="CP18_HealthEndpoint_ReturnsOk" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.ResourcePredictionTests.CP07_ResourcePrediction_RespondsUnderFiveSeconds" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="48a49f7d-5b1e-9b87-89ba-9b7aaf921b69">
+      <Execution id="8619c4ec-b934-4bae-96b2-96658907c5e0" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.ResourcePredictionTests" name="CP07_ResourcePrediction_RespondsUnderFiveSeconds" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.ProjectRegistrationTests.CP01_ValidData_Returns200WithIdAndMessage" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="ab36bc3d-8290-b071-d974-30ec6fe50e5c">
+      <Execution id="d22da51d-5adb-4a48-b1ad-d44517b74348" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.ProjectRegistrationTests" name="CP01_ValidData_Returns200WithIdAndMessage" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.CostPredictionTests.CP09_CostPrediction_ReturnsEstimatedCost" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="a491f9bb-1fd0-5a62-3cc5-575ac80b6907">
+      <Execution id="d9c3c07b-fb99-4c34-b1ad-f858ad46eba6" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.CostPredictionTests" name="CP09_CostPrediction_ReturnsEstimatedCost" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.ResourcePredictionTests.CP06_ResourcePrediction_ReturnsMaterialsAndLabor" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="dd6fae4d-6caa-39b8-e115-c74f86bf78fc">
+      <Execution id="39f19ecb-5f48-4302-a370-914e24159509" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.ResourcePredictionTests" name="CP06_ResourcePrediction_ReturnsMaterialsAndLabor" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.NavigationTests.CP18c_PredictionsListEndpoint_ReturnsOkArray" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="c2ae49b1-a01e-2337-ef5c-4bed4412999e">
+      <Execution id="1d129614-0efd-409c-866c-213d70af5ecb" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.NavigationTests" name="CP18c_PredictionsListEndpoint_ReturnsOkArray" />
+    </UnitTest>
+    <UnitTest name="PriceVision.Api.Tests.DataValidationTests.CP04_HighCost_ReturnsOkWithWarning" storage="c:\users\pauli\documents\github\pricevision\tests\pricevision.tests\bin\debug\net10.0\pricevisiontests.dll" id="92a441ad-97cd-1507-a809-774d715f36a9">
+      <Execution id="40d2ce5e-43d2-4e1b-9153-8e5d251c20d2" />
+      <TestMethod codeBase="C:\Users\Pauli\Documents\GitHub\PriceVision\tests\PriceVision.Tests\bin\Debug\net10.0\PriceVisionTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PriceVision.Api.Tests.DataValidationTests" name="CP04_HighCost_ReturnsOkWithWarning" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="b6d2b8fd-b0e9-5657-51c3-f08a016d6663" executionId="d5fed04f-c7f9-4a34-9a57-1adc76adf996" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6d2f33c8-fba1-af40-ebc9-745f6d20c025" executionId="ced090d5-e6b0-4d75-9157-600aaa728278" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dd6fae4d-6caa-39b8-e115-c74f86bf78fc" executionId="39f19ecb-5f48-4302-a370-914e24159509" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c2ae49b1-a01e-2337-ef5c-4bed4412999e" executionId="1d129614-0efd-409c-866c-213d70af5ecb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dae26cf3-4b49-f907-8e33-09fabcff6353" executionId="11f8c794-0edf-4548-a875-c001f52d4d12" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="30c74b36-3eef-1f1e-f7fb-6e94eab59e38" executionId="69d6063a-b407-47b8-a9ad-b143781545ac" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ab36bc3d-8290-b071-d974-30ec6fe50e5c" executionId="d22da51d-5adb-4a48-b1ad-d44517b74348" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="92a441ad-97cd-1507-a809-774d715f36a9" executionId="40d2ce5e-43d2-4e1b-9153-8e5d251c20d2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7208660b-f007-b516-831a-793fae8c853e" executionId="c4194cd9-ff83-4d83-9fa3-1ac21e30b2f8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a00b6ef2-cd7b-59ed-98b7-6682d88c2024" executionId="f45ffed1-e42a-41cb-a23d-19aa3e62023d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="13907c4f-8d69-1fa9-8004-ec5d7f46ce80" executionId="ddddc94d-1ab2-4559-a51b-1130ae08038e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e947bcba-896d-f662-5ce5-1a38d010dd6e" executionId="6d06426c-99be-433e-b6e6-e68159d2ee9d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="61763285-c70b-d563-4dc0-6724b7b7b6a5" executionId="eab51aee-8b7b-48b1-840d-7e2f1808d2ee" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="32c0567b-1e8f-39c8-f5e6-d37d4e1882ad" executionId="b65380f1-a468-4128-a3bd-fc2e8fc8bcba" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a27b1536-77ef-5faa-cbe4-fcd9419204d7" executionId="c4122e2f-f7d5-4c38-a6f2-d5b459d60039" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="48a49f7d-5b1e-9b87-89ba-9b7aaf921b69" executionId="8619c4ec-b934-4bae-96b2-96658907c5e0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2e822177-0911-a9a5-4d92-93ad12db9aad" executionId="525a5ec0-9793-464c-ad75-16397669a1ef" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c268142e-d0cc-6219-e371-00ee37c0cb6e" executionId="fc5a96ec-795d-4bc6-a530-756b61f93a52" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a74a5377-8db9-ee5c-d7bd-9461cfd36baa" executionId="56f6d632-4fb3-4fe0-a8a1-92a6e54402d6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a491f9bb-1fd0-5a62-3cc5-575ac80b6907" executionId="d9c3c07b-fb99-4c34-b1ad-f858ad46eba6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="170aee9b-c79b-fb36-5931-ee00940561d4" executionId="2285d49c-d2d0-46bc-9d76-c7c643268244" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="629312b8-a029-2a89-e868-bac0e5f0a78f" executionId="0a651d8c-5dc2-40dd-86cb-2a99101c9e15" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Resultados sin formato de lista" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="Todos los resultados cargados" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="22" executed="22" passed="22" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.5)&#xD;
+[xUnit.net 00:00:00.22]   Discovering: PriceVisionTests&#xD;
+[xUnit.net 00:00:00.34]   Discovered:  PriceVisionTests&#xD;
+[xUnit.net 00:00:00.35]   Starting:    PriceVisionTests&#xD;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]&#xD;
+      Executed DbCommand (27ms) [Parameters=[], CommandType='Text', CommandTimeout='30']&#xD;
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;&#xD;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]&#xD;
+      Executed DbCommand (34ms) [Parameters=[], CommandType='Text', CommandTimeout='30']&#xD;
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;&#xD;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]&#xD;
+      Executed DbCommand (28ms) [Parameters=[], CommandType='Text', CommandTimeout='30']&#xD;
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;&#xD;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]&#xD;
+      Executed DbCommand (31ms) [Parameters=[], CommandType='Text', CommandTimeout='30']&#xD;
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;&#xD;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]&#xD;
+      Executed DbCommand (35ms) [Parameters=[], CommandType='Text', CommandTimeout='30']&#xD;
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;&#xD;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]&#xD;
+      Executed DbCommand (32ms) [Parameters=[], CommandType='Text', CommandTimeout='30']&#xD;
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\Pauli\Documents\GitHub\PriceVision\backend\PriceVision.Api&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\Pauli\Documents\GitHub\PriceVision\backend\PriceVision.Api&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\Pauli\Documents\GitHub\PriceVision\backend\PriceVision.Api&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\Pauli\Documents\GitHub\PriceVision\backend\PriceVision.Api&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\Pauli\Documents\GitHub\PriceVision\backend\PriceVision.Api&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\Pauli\Documents\GitHub\PriceVision\backend\PriceVision.Api&#xD;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]&#xD;
+      Executed DbCommand (184ms) [Parameters=[], CommandType='Text', CommandTimeout='30']&#xD;
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\Pauli\Documents\GitHub\PriceVision\backend\PriceVision.Api&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]&#xD;
+      Executed DbCommand (11ms) [Parameters=[@id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']&#xD;
+      SELECT "p"."Id", "p"."AreaM2", "p"."CreatedAtUtc", "p"."DurationDays", "p"."EstimatedMaterialCostCop", "p"."EstimatedMaterialQuantity", "p"."Location", "p"."ModelVersion", "p"."RequiredLaborHours", "p"."Type"&#xD;
+      FROM "Predictions" AS "p"&#xD;
+      WHERE "p"."Id" = @id&#xD;
+      LIMIT 1&#xD;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]&#xD;
+      Executed DbCommand (9ms) [Parameters=[@p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']&#xD;
+      SELECT "p"."Id", "p"."AreaM2", "p"."CreatedAtUtc", "p"."DurationDays", "p"."EstimatedMaterialCostCop", "p"."EstimatedMaterialQuantity", "p"."Location", "p"."ModelVersion", "p"."RequiredLaborHours", "p"."Type"&#xD;
+      FROM "Predictions" AS "p"&#xD;
+      ORDER BY "p"."CreatedAtUtc" DESC&#xD;
+      LIMIT @p&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+[xUnit.net 00:00:04.27]   Finished:    PriceVisionTests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>
