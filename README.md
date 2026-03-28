@@ -358,3 +358,22 @@ Estas advertencias:
 - la prediccion financiera actual es un servicio de calculo, no un modelo ML independiente
 - los artefactos del modelo se guardan en `backend/PriceVision.Api/Artifacts`
 - si cambias endpoints o esquema, reinicia el backend para que la app refleje los cambios
+
+##  Pruebas automatizadas
+El proyecto incluye una suite de 22 pruebas de integracion que cubren las 7 historias de usuario del plan de pruebas. Las pruebas levantan el servidor en memoria sin necesidad de tener el backend corriendo por separado, este codigo se encuentra en la rama Test
+## Ejecutar las pruebas
+Desde la raiz del repositorio:
+powershelldotnet test backend/PriceVision.slnx
+## Resultado esperado:
+Resumen de pruebas: total: 22; con errores: 0; correcto: 22; omitido: 0
+Ver el detalle de cada prueba
+Para ver el nombre y estado de cada caso individualmente:
+powershelldotnet test backend/PriceVision.slnx --verbosity normal
+## Ver los resultados en HTML
+Para generar un reporte exportable:
+powershelldotnet test backend/PriceVision.slnx --logger "html;LogFileName=resultados.html"
+## El archivo se genera en:
+tests/PriceVision.Tests/TestResults/resultados.html
+Abrelo en cualquier navegador para ver la tabla completa de resultados con el estado de cada caso de prueba
+## Importante
+Ya hay un archivo resultados.html donde se convirtio el archivo TRX en un html para que sea mas entendible
