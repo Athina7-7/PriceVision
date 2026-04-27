@@ -53,6 +53,8 @@ export class AppComponent implements OnInit {
   downloadingEvmId = '';
   downloadingPredictionExcelId = '';
   downloadingEvmExcelId = '';
+  showPredictionChart = false;
+  showEvmChart = false;
 
   form = {
     name: '',
@@ -416,12 +418,14 @@ export class AppComponent implements OnInit {
     this.selectedPredictionDetail = item;
     this.predictionSelection.projectId = item.projectId;
     this.selectedProject = this.projects.find((project) => project.projectId === item.projectId) ?? this.selectedProject;
+    this.showPredictionChart = false;
   }
 
   selectEvmDetail(item: EvmSummaryResponse): void {
     this.selectedEvmDetail = item;
     this.evmSelection.projectId = item.projectId;
     this.selectedProject = this.projects.find((project) => project.projectId === item.projectId) ?? this.selectedProject;
+    this.showEvmChart = false;
     this.loadEvmHistory(item.projectId);
   }
 
@@ -545,6 +549,56 @@ export class AppComponent implements OnInit {
 
   isEvmExcelDownloading(recordId: string): boolean {
     return !!recordId && this.downloadingEvmExcelId === recordId;
+  }
+
+  togglePredictionChart(event?: Event): void {
+    event?.stopPropagation();
+    this.showPredictionChart = !this.showPredictionChart;
+  }
+
+  toggleEvmChart(event?: Event): void {
+    event?.stopPropagation();
+    this.showEvmChart = !this.showEvmChart;
+  }
+
+  predictionCostComparisonGeometry(width = 860, height = 260): ComparisonGeometry {
+    return this.buildComparisonGeometry(
+      this.selectedPredictionDetail?.baseCostCop ?? 0,
+      this.predictionEstimatedCost,
+      width,
+      height
+    );
+  }
+
+  evmCostComparisonGeometry(width = 860, height = 260): ComparisonGeometry {
+    return this.buildComparisonGeometry(
+      this.selectedEvmDetail?.pv ?? 0,
+      this.selectedEvmDetail?.ac ?? 0,
+      width,
+      height
+    );
+  }
+
+  get predictionEstimatedCost(): number {
+    if (this.selectedFinancialDetail && this.selectedPredictionDetail?.projectId === this.selectedFinancialDetail.projectId) {
+      return this.selectedFinancialDetail.estimatedTotalCostCop;
+    }
+
+    return this.selectedPredictionDetail?.estimatedMaterialCostCop ?? 0;
+  }
+
+  get predictionDeviationPercentage(): number {
+    return this.calculateDeviationPercentage(
+      this.selectedPredictionDetail?.baseCostCop ?? 0,
+      this.predictionEstimatedCost
+    );
+  }
+
+  get evmDeviationPercentage(): number {
+    return this.calculateDeviationPercentage(
+      this.selectedEvmDetail?.pv ?? 0,
+      this.selectedEvmDetail?.ac ?? 0
+    );
   }
 
   get filteredPredictionProjects(): ProjectSummaryResponse[] {
@@ -793,4 +847,54 @@ export class AppComponent implements OnInit {
 
     return items.filter((item) => item.location === location);
   }
+
+  private buildComparisonGeometry(planned: number, estimated: number, width: number, height: number): ComparisonGeometry {
+    const paddingX = 56;
+    const paddingY = 28;
+    const chartWidth = width - paddingX * 2;
+    const chartHeight = height - paddingY * 2;
+    const xStart = paddingX;
+    const xEnd = paddingX + chartWidth;
+    const maxValue = Math.max(planned, estimated, 1);
+    const minValue = Math.min(planned, estimated, 0);
+    const range = Math.max(maxValue - minValue, 1);
+
+    const yFor = (value: number) => paddingY + chartHeight - ((value - minValue) / range) * chartHeight;
+    const plannedY = yFor(planned);
+    const estimatedY = yFor(estimated);
+    const deltaMidY = ((plannedY + estimatedY) / 2).toFixed(2);
+    const deltaLabelY = Math.max(24, Math.min(height - 36, Number(deltaMidY) - 12));
+
+    return {
+      plannedLine: `${xStart},${plannedY.toFixed(2)} ${xEnd},${plannedY.toFixed(2)}`,
+      estimatedLine: `${xStart},${plannedY.toFixed(2)} ${xEnd},${estimatedY.toFixed(2)}`,
+      varianceArea: `${xStart},${plannedY.toFixed(2)} ${xEnd},${plannedY.toFixed(2)} ${xEnd},${estimatedY.toFixed(2)}`,
+      leftX: xStart,
+      rightX: xEnd,
+      plannedY,
+      estimatedY,
+      labelX: xEnd - 110,
+      labelY: deltaLabelY
+    };
+  }
+
+  private calculateDeviationPercentage(planned: number, estimated: number): number {
+    if (!planned) {
+      return 0;
+    }
+
+    return ((estimated - planned) / planned) * 100;
+  }
+}
+
+interface ComparisonGeometry {
+  plannedLine: string;
+  estimatedLine: string;
+  varianceArea: string;
+  leftX: number;
+  rightX: number;
+  plannedY: number;
+  estimatedY: number;
+  labelX: number;
+  labelY: number;
 }

@@ -176,6 +176,13 @@
                   (click)="downloadPredictionExcel(selectedPredictionDetail.predictionId, excelFileName(selectedPredictionDetail.location, selectedPredictionDetail.projectName))">
                   {{ isPredictionExcelDownloading(selectedPredictionDetail.predictionId) ? 'Descargando...' : 'Descargar Excel' }}
                 </button>
+                <button
+                  type="button"
+                  class="inline-action ghost-inline-action"
+                  [disabled]="!selectedPredictionDetail.predictionId"
+                  (click)="togglePredictionChart()">
+                  {{ showPredictionChart ? 'Ocultar grafica' : 'Vista grafica' }}
+                </button>
               </div>
             </div>
             <div class="detail-grid">
@@ -218,6 +225,43 @@
               <div *ngIf="selectedPredictionDetail.predictedLabor">
                 <span>Mano de obra</span>
                 <strong>{{ selectedPredictionDetail.requiredLaborHours | number:'1.0-2' }} horas-persona</strong>
+              </div>
+            </div>
+            <div class="comparison-chart-card" *ngIf="showPredictionChart">
+              <div class="comparison-chart-header">
+                <div>
+                  <span>Comparacion</span>
+                  <h4>Costo planificado vs estimado</h4>
+                </div>
+                <strong [class.positive]="predictionDeviationPercentage > 0" [class.negative]="predictionDeviationPercentage < 0">
+                  Desviacion {{ predictionDeviationPercentage | number:'1.2-2' }}%
+                </strong>
+              </div>
+              <svg viewBox="0 0 860 260" role="img" aria-label="Grafica comparativa de costo planificado y estimado en prediccion">
+                <line x1="56" y1="232" x2="804" y2="232" class="axis-line"></line>
+                <line x1="56" y1="28" x2="56" y2="232" class="axis-line"></line>
+                <polygon class="variance-area variance-area-ev" [attr.points]="predictionCostComparisonGeometry().varianceArea"></polygon>
+                <polyline class="line pv reference-line" [attr.points]="predictionCostComparisonGeometry().plannedLine"></polyline>
+                <polyline class="line ev comparison-slope" [attr.points]="predictionCostComparisonGeometry().estimatedLine"></polyline>
+                <line
+                  class="delta-line"
+                  [attr.x1]="predictionCostComparisonGeometry().rightX"
+                  [attr.y1]="predictionCostComparisonGeometry().plannedY"
+                  [attr.x2]="predictionCostComparisonGeometry().rightX"
+                  [attr.y2]="predictionCostComparisonGeometry().estimatedY">
+                </line>
+                <circle [attr.cx]="predictionCostComparisonGeometry().leftX" [attr.cy]="predictionCostComparisonGeometry().plannedY" r="5" class="point point-pv"></circle>
+                <circle [attr.cx]="predictionCostComparisonGeometry().rightX" [attr.cy]="predictionCostComparisonGeometry().plannedY" r="5" class="point point-pv"></circle>
+                <circle [attr.cx]="predictionCostComparisonGeometry().rightX" [attr.cy]="predictionCostComparisonGeometry().estimatedY" r="6" class="point point-ev highlight-point"></circle>
+                <text [attr.x]="predictionCostComparisonGeometry().labelX" [attr.y]="predictionCostComparisonGeometry().labelY" class="variance-label">
+                  {{ predictionDeviationPercentage | number:'1.2-2' }}%
+                </text>
+                <text x="56" y="250" class="axis-label">Inicio</text>
+                <text x="770" y="250" class="axis-label">Comparacion</text>
+              </svg>
+              <div class="legend comparison-legend">
+                <span><i class="dot pv"></i> Planificado: {{ formatCop(selectedPredictionDetail.baseCostCop) }}</span>
+                <span><i class="dot ev"></i> Estimado: {{ formatCop(predictionEstimatedCost) }}</span>
               </div>
             </div>
           </div>
@@ -295,6 +339,12 @@
                   [disabled]="isPredictionExcelDownloading(item.predictionId)"
                   (click)="downloadPredictionExcel(item.predictionId, excelFileName(item.location, item.projectName), $event)">
                   {{ isPredictionExcelDownloading(item.predictionId) ? 'Descargando...' : 'Descargar Excel' }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-action ghost-inline-action"
+                  (click)="selectPredictionDetail(item); togglePredictionChart($event)">
+                  Vista grafica
                 </button>
               </div>
             </article>
@@ -401,6 +451,13 @@
                   (click)="downloadEvmExcel(selectedEvmDetail.recordId, excelFileName(selectedEvmDetail.location, selectedEvmDetail.projectName))">
                   {{ isEvmExcelDownloading(selectedEvmDetail.recordId) ? 'Descargando...' : 'Descargar Excel' }}
                 </button>
+                <button
+                  type="button"
+                  class="inline-action ghost-inline-action"
+                  [disabled]="!selectedEvmDetail.recordId"
+                  (click)="toggleEvmChart()">
+                  {{ showEvmChart ? 'Ocultar grafica' : 'Vista grafica' }}
+                </button>
               </div>
             </div>
             <div class="detail-grid">
@@ -441,6 +498,43 @@
                 <strong>{{ selectedEvmDetail.scheduleInterpretation }}</strong>
               </div>
             </div>
+            <div class="comparison-chart-card" *ngIf="showEvmChart">
+              <div class="comparison-chart-header">
+                <div>
+                  <span>Comparacion</span>
+                  <h4>Costo planificado vs estimado</h4>
+                </div>
+                <strong [class.positive]="evmDeviationPercentage > 0" [class.negative]="evmDeviationPercentage < 0">
+                  Desviacion {{ evmDeviationPercentage | number:'1.2-2' }}%
+                </strong>
+              </div>
+              <svg viewBox="0 0 860 260" role="img" aria-label="Grafica comparativa de costo planificado y estimado en EVM">
+                <line x1="56" y1="232" x2="804" y2="232" class="axis-line"></line>
+                <line x1="56" y1="28" x2="56" y2="232" class="axis-line"></line>
+                <polygon class="variance-area variance-area-ac" [attr.points]="evmCostComparisonGeometry().varianceArea"></polygon>
+                <polyline class="line pv reference-line" [attr.points]="evmCostComparisonGeometry().plannedLine"></polyline>
+                <polyline class="line ac comparison-slope" [attr.points]="evmCostComparisonGeometry().estimatedLine"></polyline>
+                <line
+                  class="delta-line"
+                  [attr.x1]="evmCostComparisonGeometry().rightX"
+                  [attr.y1]="evmCostComparisonGeometry().plannedY"
+                  [attr.x2]="evmCostComparisonGeometry().rightX"
+                  [attr.y2]="evmCostComparisonGeometry().estimatedY">
+                </line>
+                <circle [attr.cx]="evmCostComparisonGeometry().leftX" [attr.cy]="evmCostComparisonGeometry().plannedY" r="5" class="point point-pv"></circle>
+                <circle [attr.cx]="evmCostComparisonGeometry().rightX" [attr.cy]="evmCostComparisonGeometry().plannedY" r="5" class="point point-pv"></circle>
+                <circle [attr.cx]="evmCostComparisonGeometry().rightX" [attr.cy]="evmCostComparisonGeometry().estimatedY" r="6" class="point point-ac highlight-point"></circle>
+                <text [attr.x]="evmCostComparisonGeometry().labelX" [attr.y]="evmCostComparisonGeometry().labelY" class="variance-label">
+                  {{ evmDeviationPercentage | number:'1.2-2' }}%
+                </text>
+                <text x="56" y="250" class="axis-label">Inicio</text>
+                <text x="770" y="250" class="axis-label">Comparacion</text>
+              </svg>
+              <div class="legend comparison-legend">
+                <span><i class="dot pv"></i> Planificado (PV): {{ formatCop(selectedEvmDetail.pv) }}</span>
+                <span><i class="dot ac"></i> Estimado (AC): {{ formatCop(selectedEvmDetail.ac) }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -467,6 +561,12 @@
                   [disabled]="isEvmExcelDownloading(item.recordId)"
                   (click)="downloadEvmExcel(item.recordId, excelFileName(item.location, item.projectName), $event)">
                   {{ isEvmExcelDownloading(item.recordId) ? 'Descargando...' : 'Descargar Excel' }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-action ghost-inline-action"
+                  (click)="selectEvmDetail(item); toggleEvmChart($event)">
+                  Vista grafica
                 </button>
               </div>
             </article>
