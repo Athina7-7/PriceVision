@@ -105,10 +105,18 @@
           <div class="form-card">
             <div class="form-grid">
               <label>
+                <span>Filtrar por ubicacion</span>
+                <select [(ngModel)]="predictionLocationFilter" (ngModelChange)="onPredictionLocationFilterChange()">
+                  <option value="">Todas las ubicaciones</option>
+                  <option *ngFor="let item of locations" [value]="item">{{ item }}</option>
+                </select>
+              </label>
+
+              <label>
                 <span>Proyecto</span>
                 <select [(ngModel)]="predictionSelection.projectId">
                   <option value="">Selecciona un proyecto</option>
-                  <option *ngFor="let item of projects" [value]="item.projectId">
+                  <option *ngFor="let item of filteredPredictionProjects" [value]="item.projectId">
                     {{ item.name }} - {{ item.type }} - Materiales {{ item.hasMaterialsPrediction ? 'Si' : 'No' }} - Mano de obra {{ item.hasLaborPrediction ? 'Si' : 'No' }}
                   </option>
                 </select>
@@ -151,7 +159,25 @@
           </div>
 
           <div class="chart-card" *ngIf="selectedPredictionDetail">
-            <h3>Detalle de prediccion</h3>
+            <div class="card-header">
+              <h3>Detalle de prediccion</h3>
+              <div class="card-actions-group">
+                <button
+                  type="button"
+                  class="inline-action"
+                  [disabled]="!selectedPredictionDetail.predictionId || isPredictionDownloading(selectedPredictionDetail.predictionId)"
+                  (click)="downloadPredictionPdf(selectedPredictionDetail.predictionId, pdfFileName(selectedPredictionDetail.location, selectedPredictionDetail.projectName))">
+                  {{ isPredictionDownloading(selectedPredictionDetail.predictionId) ? 'Descargando...' : 'Descargar PDF' }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-action secondary-inline-action"
+                  [disabled]="!selectedPredictionDetail.predictionId || isPredictionExcelDownloading(selectedPredictionDetail.predictionId)"
+                  (click)="downloadPredictionExcel(selectedPredictionDetail.predictionId, excelFileName(selectedPredictionDetail.location, selectedPredictionDetail.projectName))">
+                  {{ isPredictionExcelDownloading(selectedPredictionDetail.predictionId) ? 'Descargando...' : 'Descargar Excel' }}
+                </button>
+              </div>
+            </div>
             <div class="detail-grid">
               <div>
                 <span>Proyecto</span>
@@ -247,30 +273,48 @@
 
         <div class="chart-card">
           <h3>Predicciones recientes</h3>
-          <div class="recent-predictions" *ngIf="recentPredictions.length > 0">
-            <article class="recent-card selectable" *ngFor="let item of recentPredictions" (click)="selectPredictionDetail(item)">
+          <div class="recent-predictions" *ngIf="filteredRecentPredictions.length > 0">
+            <article class="recent-card selectable" *ngFor="let item of filteredRecentPredictions" (click)="selectPredictionDetail(item)">
               <p>{{ item.projectName }}</p>
               <h4>{{ asDateTime(item.createdAtUtc) }}</h4>
+              <small>{{ item.location }}</small>
               <strong *ngIf="item.predictedMaterials">Materiales: {{ item.estimatedMaterialQuantity | number:'1.0-2' }}</strong>
               <strong *ngIf="item.predictedLabor">Mano de obra: {{ item.requiredLaborHours | number:'1.0-2' }}</strong>
               <small *ngIf="item.predictedMaterials">{{ formatCop(item.estimatedMaterialCostCop) }}</small>
+              <div class="recent-card-actions">
+                <button
+                  type="button"
+                  class="inline-action"
+                  [disabled]="isPredictionDownloading(item.predictionId)"
+                  (click)="downloadPredictionPdf(item.predictionId, pdfFileName(item.location, item.projectName), $event)">
+                  {{ isPredictionDownloading(item.predictionId) ? 'Descargando...' : 'Descargar PDF' }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-action secondary-inline-action"
+                  [disabled]="isPredictionExcelDownloading(item.predictionId)"
+                  (click)="downloadPredictionExcel(item.predictionId, excelFileName(item.location, item.projectName), $event)">
+                  {{ isPredictionExcelDownloading(item.predictionId) ? 'Descargando...' : 'Descargar Excel' }}
+                </button>
+              </div>
             </article>
           </div>
-          <div class="empty-state" *ngIf="recentPredictions.length === 0">
+          <div class="empty-state" *ngIf="filteredRecentPredictions.length === 0">
             Aun no hay predicciones recientes.
           </div>
 
           <h3 class="subsection-title">Predicciones financieras recientes</h3>
-          <div class="recent-predictions" *ngIf="recentFinancialPredictions.length > 0">
-            <article class="recent-card selectable" *ngFor="let item of recentFinancialPredictions" (click)="selectFinancialDetail(item)">
+          <div class="recent-predictions" *ngIf="filteredRecentFinancialPredictions.length > 0">
+            <article class="recent-card selectable" *ngFor="let item of filteredRecentFinancialPredictions" (click)="selectFinancialDetail(item)">
               <p>{{ item.projectName }}</p>
               <h4>{{ asDateTime(item.createdAtUtc) }}</h4>
+              <small>{{ item.location }}</small>
               <strong>Costo total: {{ formatCop(item.estimatedTotalCostCop) }}</strong>
               <small>Rango: {{ formatCop(item.minimumEstimatedCostCop) }} - {{ formatCop(item.maximumEstimatedCostCop) }}</small>
               <small>Confianza: {{ item.confidencePercentage | number:'1.0-2' }}% / {{ item.confidenceLevel }}</small>
             </article>
           </div>
-          <div class="empty-state" *ngIf="recentFinancialPredictions.length === 0">
+          <div class="empty-state" *ngIf="filteredRecentFinancialPredictions.length === 0">
             Aun no hay predicciones financieras recientes.
           </div>
         </div>
@@ -288,10 +332,18 @@
           <div class="form-card">
             <div class="form-grid">
               <label>
+                <span>Filtrar por ubicacion</span>
+                <select [(ngModel)]="evmLocationFilter" (ngModelChange)="onEvmLocationFilterChange()">
+                  <option value="">Todas las ubicaciones</option>
+                  <option *ngFor="let item of locations" [value]="item">{{ item }}</option>
+                </select>
+              </label>
+
+              <label>
                 <span>Proyecto</span>
                 <select [(ngModel)]="evmSelection.projectId">
                   <option value="">Selecciona un proyecto</option>
-                  <option *ngFor="let item of projects" [value]="item.projectId">
+                  <option *ngFor="let item of filteredEvmProjects" [value]="item.projectId">
                     {{ item.name }} - Materiales {{ item.hasMaterialsPrediction ? 'Si' : 'No' }} - Mano de obra {{ item.hasLaborPrediction ? 'Si' : 'No' }} - EVM {{ item.hasEvm ? 'Si' : 'No' }}
                   </option>
                 </select>
@@ -332,7 +384,25 @@
           </div>
 
           <div class="chart-card" *ngIf="selectedEvmDetail">
-            <h3>Detalle EVM</h3>
+            <div class="card-header">
+              <h3>Detalle EVM</h3>
+              <div class="card-actions-group">
+                <button
+                  type="button"
+                  class="inline-action"
+                  [disabled]="!selectedEvmDetail.recordId || isEvmDownloading(selectedEvmDetail.recordId)"
+                  (click)="downloadEvmPdf(selectedEvmDetail.recordId, pdfFileName(selectedEvmDetail.location, selectedEvmDetail.projectName))">
+                  {{ isEvmDownloading(selectedEvmDetail.recordId) ? 'Descargando...' : 'Descargar PDF' }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-action secondary-inline-action"
+                  [disabled]="!selectedEvmDetail.recordId || isEvmExcelDownloading(selectedEvmDetail.recordId)"
+                  (click)="downloadEvmExcel(selectedEvmDetail.recordId, excelFileName(selectedEvmDetail.location, selectedEvmDetail.projectName))">
+                  {{ isEvmExcelDownloading(selectedEvmDetail.recordId) ? 'Descargando...' : 'Descargar Excel' }}
+                </button>
+              </div>
+            </div>
             <div class="detail-grid">
               <div>
                 <span>Proyecto</span>
@@ -376,15 +446,32 @@
 
         <div class="chart-card">
           <h3>EVM recientes</h3>
-          <div class="recent-predictions" *ngIf="recentEvm.length > 0">
-            <article class="recent-card selectable" *ngFor="let item of recentEvm" (click)="selectEvmDetail(item)">
+          <div class="recent-predictions" *ngIf="filteredRecentEvm.length > 0">
+            <article class="recent-card selectable" *ngFor="let item of filteredRecentEvm" (click)="selectEvmDetail(item)">
               <p>{{ item.projectName }}</p>
               <h4>{{ asDateTime(item.createdAtUtc) }}</h4>
+              <small>{{ item.location }}</small>
               <strong>PV / EV / AC: {{ formatCop(item.pv) }} / {{ formatCop(item.ev) }} / {{ formatCop(item.ac) }}</strong>
               <small>CPI {{ item.cpi | number:'1.2-4' }} / SPI {{ item.spi | number:'1.2-4' }}</small>
+              <div class="recent-card-actions">
+                <button
+                  type="button"
+                  class="inline-action"
+                  [disabled]="isEvmDownloading(item.recordId)"
+                  (click)="downloadEvmPdf(item.recordId, pdfFileName(item.location, item.projectName), $event)">
+                  {{ isEvmDownloading(item.recordId) ? 'Descargando...' : 'Descargar PDF' }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-action secondary-inline-action"
+                  [disabled]="isEvmExcelDownloading(item.recordId)"
+                  (click)="downloadEvmExcel(item.recordId, excelFileName(item.location, item.projectName), $event)">
+                  {{ isEvmExcelDownloading(item.recordId) ? 'Descargando...' : 'Descargar Excel' }}
+                </button>
+              </div>
             </article>
           </div>
-          <div class="empty-state" *ngIf="recentEvm.length === 0">
+          <div class="empty-state" *ngIf="filteredRecentEvm.length === 0">
             Aun no hay registros EVM recientes.
           </div>
         </div>

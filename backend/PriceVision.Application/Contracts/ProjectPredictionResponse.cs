@@ -1,6 +1,7 @@
 namespace PriceVision.Application.Contracts;
 
 public sealed record ProjectPredictionResponse(
+    Guid PredictionId,
     Guid ProjectId,
     string Name,
     float AreaM2,

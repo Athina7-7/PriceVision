@@ -1,3 +1,4 @@
+using PriceVision.Api.Reports;
 using PriceVision.Application.Abstractions;
 using PriceVision.Application.Contracts;
 using PriceVision.Domain.Entities;
@@ -9,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddSingleton<ProjectPdfReportGenerator>();
+builder.Services.AddSingleton<ProjectExcelReportGenerator>();
 
 var corsPolicyName = "AllowFrontend";
 builder.Services.AddCors(options =>
@@ -268,6 +271,7 @@ app.MapPost("/api/projects/{projectId:guid}/predict", async (
     await predictionRepository.AddAsync(predictionEntity, cancellationToken);
 
     var response = new ProjectPredictionResponse(
+        PredictionId: predictionEntity.Id,
         ProjectId: project.Id,
         Name: project.Name,
         AreaM2: project.AreaM2,
@@ -275,7 +279,7 @@ app.MapPost("/api/projects/{projectId:guid}/predict", async (
         Type: project.Type,
         DurationMonths: project.DurationMonths,
         BaseCostCop: project.BaseCostCop,
-        CreatedAtUtc: project.CreatedAtUtc,
+        CreatedAtUtc: predictionEntity.CreatedAtUtc,
         PredictMaterials: request.PredictMaterials,
         PredictLabor: request.PredictLabor,
         MaterialesEstimados: request.PredictMaterials ? prediction.MaterialesEstimados : null,
@@ -327,6 +331,70 @@ app.MapPost("/api/predictions", async (PredictionRequest request, IPredictiveMod
     return Results.Ok(prediction);
 })
 .WithName("CreatePrediction");
+
+app.MapGet("/api/predictions/{id:guid}/pdf", async (
+    Guid id,
+    IPredictionRepository predictionRepository,
+    IProjectRepository projectRepository,
+    IFinancialPredictionRepository financialPredictionRepository,
+    IEvmRepository evmRepository,
+    ProjectPdfReportGenerator pdfGenerator,
+    CancellationToken cancellationToken) =>
+{
+    var prediction = await predictionRepository.GetByIdAsync(id, cancellationToken);
+    if (prediction is null)
+    {
+        return Results.NotFound(new { error = "No se encontro la prediccion solicitada." });
+    }
+
+    var project = await projectRepository.GetByIdAsync(prediction.ProjectId, cancellationToken);
+    if (project is null)
+    {
+        return Results.NotFound(new { error = "No se encontro el proyecto asociado a la prediccion." });
+    }
+
+    var predictions = await predictionRepository.GetByProjectIdAsync(project.Id, cancellationToken);
+    var financialPrediction = await financialPredictionRepository.GetByProjectIdAsync(project.Id, cancellationToken);
+    var evmHistory = await evmRepository.GetByProjectIdAsync(project.Id, 24, cancellationToken);
+
+    var pdf = pdfGenerator.GeneratePredictionReport(project, prediction, predictions, financialPrediction, evmHistory);
+    var fileName = ProjectReportFileNameBuilder.BuildPdf(project.Location, project.Name);
+
+    return Results.File(pdf, "application/pdf", fileName);
+})
+.WithName("DownloadPredictionPdf");
+
+app.MapGet("/api/predictions/{id:guid}/excel", async (
+    Guid id,
+    IPredictionRepository predictionRepository,
+    IProjectRepository projectRepository,
+    IFinancialPredictionRepository financialPredictionRepository,
+    IEvmRepository evmRepository,
+    ProjectExcelReportGenerator excelGenerator,
+    CancellationToken cancellationToken) =>
+{
+    var prediction = await predictionRepository.GetByIdAsync(id, cancellationToken);
+    if (prediction is null)
+    {
+        return Results.NotFound(new { error = "No se encontro la prediccion solicitada." });
+    }
+
+    var project = await projectRepository.GetByIdAsync(prediction.ProjectId, cancellationToken);
+    if (project is null)
+    {
+        return Results.NotFound(new { error = "No se encontro el proyecto asociado a la prediccion." });
+    }
+
+    var predictions = await predictionRepository.GetByProjectIdAsync(project.Id, cancellationToken);
+    var financialPrediction = await financialPredictionRepository.GetByProjectIdAsync(project.Id, cancellationToken);
+    var evmHistory = await evmRepository.GetByProjectIdAsync(project.Id, 24, cancellationToken);
+
+    var excel = excelGenerator.GeneratePredictionReport(project, prediction, predictions, financialPrediction, evmHistory);
+    var fileName = ProjectReportFileNameBuilder.BuildExcel(project.Location, project.Name);
+
+    return Results.File(excel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+})
+.WithName("DownloadPredictionExcel");
 
 app.MapGet("/api/predictions/{id:guid}", async (Guid id, IPredictionRepository repository, CancellationToken cancellationToken) =>
 {
@@ -474,6 +542,70 @@ app.MapPost("/api/evm/calculate", async (
     }
 })
 .WithName("CalculateEvm");
+
+app.MapGet("/api/evm/records/{recordId:guid}/pdf", async (
+    Guid recordId,
+    IEvmRepository evmRepository,
+    IProjectRepository projectRepository,
+    IPredictionRepository predictionRepository,
+    IFinancialPredictionRepository financialPredictionRepository,
+    ProjectPdfReportGenerator pdfGenerator,
+    CancellationToken cancellationToken) =>
+{
+    var record = await evmRepository.GetByIdAsync(recordId, cancellationToken);
+    if (record is null)
+    {
+        return Results.NotFound(new { error = "No se encontro el registro EVM solicitado." });
+    }
+
+    var project = await projectRepository.GetByIdAsync(record.ProjectId, cancellationToken);
+    if (project is null)
+    {
+        return Results.NotFound(new { error = "No se encontro el proyecto asociado al registro EVM." });
+    }
+
+    var predictions = await predictionRepository.GetByProjectIdAsync(project.Id, cancellationToken);
+    var financialPrediction = await financialPredictionRepository.GetByProjectIdAsync(project.Id, cancellationToken);
+    var evmHistory = await evmRepository.GetByProjectIdAsync(project.Id, 24, cancellationToken);
+
+    var pdf = pdfGenerator.GenerateEvmReport(project, record, predictions, financialPrediction, evmHistory);
+    var fileName = ProjectReportFileNameBuilder.BuildPdf(project.Location, project.Name);
+
+    return Results.File(pdf, "application/pdf", fileName);
+})
+.WithName("DownloadEvmPdf");
+
+app.MapGet("/api/evm/records/{recordId:guid}/excel", async (
+    Guid recordId,
+    IEvmRepository evmRepository,
+    IProjectRepository projectRepository,
+    IPredictionRepository predictionRepository,
+    IFinancialPredictionRepository financialPredictionRepository,
+    ProjectExcelReportGenerator excelGenerator,
+    CancellationToken cancellationToken) =>
+{
+    var record = await evmRepository.GetByIdAsync(recordId, cancellationToken);
+    if (record is null)
+    {
+        return Results.NotFound(new { error = "No se encontro el registro EVM solicitado." });
+    }
+
+    var project = await projectRepository.GetByIdAsync(record.ProjectId, cancellationToken);
+    if (project is null)
+    {
+        return Results.NotFound(new { error = "No se encontro el proyecto asociado al registro EVM." });
+    }
+
+    var predictions = await predictionRepository.GetByProjectIdAsync(project.Id, cancellationToken);
+    var financialPrediction = await financialPredictionRepository.GetByProjectIdAsync(project.Id, cancellationToken);
+    var evmHistory = await evmRepository.GetByProjectIdAsync(project.Id, 24, cancellationToken);
+
+    var excel = excelGenerator.GenerateEvmReport(project, record, predictions, financialPrediction, evmHistory);
+    var fileName = ProjectReportFileNameBuilder.BuildExcel(project.Location, project.Name);
+
+    return Results.File(excel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+})
+.WithName("DownloadEvmExcel");
 
 app.MapGet("/api/evm/{projectId:guid}/history", async (Guid projectId, int? take, IEvmService evmService, CancellationToken cancellationToken) =>
 {
