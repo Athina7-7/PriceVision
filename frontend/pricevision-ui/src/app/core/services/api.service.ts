@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -48,6 +48,7 @@ export interface CreatePredictionForProjectRequest {
 }
 
 export interface ProjectPredictionResponse {
+  predictionId: string;
   projectId: string;
   name: string;
   areaM2: number;
@@ -215,5 +216,33 @@ export class ApiService {
 
   getEvmHistory(projectId: string, take = 24): Observable<EvmHistoryPoint[]> {
     return this.http.get<EvmHistoryPoint[]>(`${environment.apiBaseUrl}/evm/${projectId}/history?take=${take}`);
+  }
+
+  downloadPredictionPdf(predictionId: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${environment.apiBaseUrl}/predictions/${predictionId}/pdf`, {
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  downloadPredictionExcel(predictionId: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${environment.apiBaseUrl}/predictions/${predictionId}/excel`, {
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  downloadEvmPdf(recordId: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${environment.apiBaseUrl}/evm/records/${recordId}/pdf`, {
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  downloadEvmExcel(recordId: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${environment.apiBaseUrl}/evm/records/${recordId}/excel`, {
+      observe: 'response',
+      responseType: 'blob'
+    });
   }
 }

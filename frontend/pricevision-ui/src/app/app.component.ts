@@ -1,4 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { HttpResponse } from '@angular/common/http';
 import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
@@ -15,8 +16,7 @@ import {
   PredictionHistoryResponse,
   ProjectActionHistoryItem,
   ProjectPredictionResponse,
-  ProjectSummaryResponse
-  ,
+  ProjectSummaryResponse,
   ProjectValidationWarningResponse
 } from './core/services/api.service';
 
@@ -49,6 +49,10 @@ export class AppComponent implements OnInit {
   selectedEvmDetail: EvmSummaryResponse | null = null;
   validationWarnings: ProjectValidationWarningResponse[] = [];
   recentFinancialPredictions: FinancialPredictionSummaryResponse[] = [];
+  downloadingPredictionId = '';
+  downloadingEvmId = '';
+  downloadingPredictionExcelId = '';
+  downloadingEvmExcelId = '';
 
   form = {
     name: '',
@@ -68,6 +72,9 @@ export class AppComponent implements OnInit {
   evmSelection = {
     projectId: ''
   };
+
+  predictionLocationFilter = '';
+  evmLocationFilter = '';
 
   validationErrors: string[] = [];
   readonly projectTypes = ['Residencial', 'Comercial', 'Industrial', 'Remodelacion'];
@@ -183,7 +190,7 @@ export class AppComponent implements OnInit {
       next: (result) => {
         this.prediction = result;
         this.selectedPredictionDetail = {
-          predictionId: '',
+          predictionId: result.predictionId,
           projectId: result.projectId,
           projectName: result.name,
           areaM2: result.areaM2,
@@ -424,6 +431,178 @@ export class AppComponent implements OnInit {
     this.selectedProject = this.projects.find((project) => project.projectId === item.projectId) ?? this.selectedProject;
   }
 
+  downloadPredictionPdf(predictionId: string, fallbackName: string, event?: Event): void {
+    event?.stopPropagation();
+
+    if (!predictionId) {
+      this.error = 'No se encontro el identificador de la prediccion para descargar.';
+      this.success = '';
+      return;
+    }
+
+    this.downloadingPredictionId = predictionId;
+    this.error = '';
+
+    this.apiService.downloadPredictionPdf(predictionId).subscribe({
+      next: (response) => {
+        this.saveFileResponse(response, fallbackName);
+        this.success = 'PDF de prediccion descargado correctamente.';
+        this.downloadingPredictionId = '';
+      },
+      error: (err) => {
+        this.downloadingPredictionId = '';
+        this.error = err?.error?.error ?? 'No fue posible descargar el PDF de prediccion.';
+      }
+    });
+  }
+
+  downloadPredictionExcel(predictionId: string, fallbackName: string, event?: Event): void {
+    event?.stopPropagation();
+
+    if (!predictionId) {
+      this.error = 'No se encontro el identificador de la prediccion para descargar.';
+      this.success = '';
+      return;
+    }
+
+    this.downloadingPredictionExcelId = predictionId;
+    this.error = '';
+
+    this.apiService.downloadPredictionExcel(predictionId).subscribe({
+      next: (response) => {
+        this.saveFileResponse(response, fallbackName);
+        this.success = 'Excel de prediccion descargado correctamente.';
+        this.downloadingPredictionExcelId = '';
+      },
+      error: (err) => {
+        this.downloadingPredictionExcelId = '';
+        this.error = err?.error?.error ?? 'No fue posible descargar el Excel de prediccion.';
+      }
+    });
+  }
+
+  downloadEvmPdf(recordId: string, fallbackName: string, event?: Event): void {
+    event?.stopPropagation();
+
+    if (!recordId) {
+      this.error = 'No se encontro el identificador del registro EVM para descargar.';
+      this.success = '';
+      return;
+    }
+
+    this.downloadingEvmId = recordId;
+    this.error = '';
+
+    this.apiService.downloadEvmPdf(recordId).subscribe({
+      next: (response) => {
+        this.saveFileResponse(response, fallbackName);
+        this.success = 'PDF EVM descargado correctamente.';
+        this.downloadingEvmId = '';
+      },
+      error: (err) => {
+        this.downloadingEvmId = '';
+        this.error = err?.error?.error ?? 'No fue posible descargar el PDF EVM.';
+      }
+    });
+  }
+
+  downloadEvmExcel(recordId: string, fallbackName: string, event?: Event): void {
+    event?.stopPropagation();
+
+    if (!recordId) {
+      this.error = 'No se encontro el identificador del registro EVM para descargar.';
+      this.success = '';
+      return;
+    }
+
+    this.downloadingEvmExcelId = recordId;
+    this.error = '';
+
+    this.apiService.downloadEvmExcel(recordId).subscribe({
+      next: (response) => {
+        this.saveFileResponse(response, fallbackName);
+        this.success = 'Excel EVM descargado correctamente.';
+        this.downloadingEvmExcelId = '';
+      },
+      error: (err) => {
+        this.downloadingEvmExcelId = '';
+        this.error = err?.error?.error ?? 'No fue posible descargar el Excel EVM.';
+      }
+    });
+  }
+
+  isPredictionDownloading(predictionId: string): boolean {
+    return !!predictionId && this.downloadingPredictionId === predictionId;
+  }
+
+  isPredictionExcelDownloading(predictionId: string): boolean {
+    return !!predictionId && this.downloadingPredictionExcelId === predictionId;
+  }
+
+  isEvmDownloading(recordId: string): boolean {
+    return !!recordId && this.downloadingEvmId === recordId;
+  }
+
+  isEvmExcelDownloading(recordId: string): boolean {
+    return !!recordId && this.downloadingEvmExcelId === recordId;
+  }
+
+  get filteredPredictionProjects(): ProjectSummaryResponse[] {
+    return this.filterByLocation(this.projects, this.predictionLocationFilter);
+  }
+
+  get filteredRecentPredictions(): PredictionHistoryResponse[] {
+    return this.filterByLocation(this.recentPredictions, this.predictionLocationFilter);
+  }
+
+  get filteredRecentFinancialPredictions(): FinancialPredictionSummaryResponse[] {
+    return this.filterByLocation(this.recentFinancialPredictions, this.predictionLocationFilter);
+  }
+
+  get filteredEvmProjects(): ProjectSummaryResponse[] {
+    return this.filterByLocation(this.projects, this.evmLocationFilter);
+  }
+
+  get filteredRecentEvm(): EvmSummaryResponse[] {
+    return this.filterByLocation(this.recentEvm, this.evmLocationFilter);
+  }
+
+  onPredictionLocationFilterChange(): void {
+    if (this.predictionSelection.projectId) {
+      const selectedProjectVisible = this.filteredPredictionProjects.some(
+        (item) => item.projectId === this.predictionSelection.projectId
+      );
+
+      if (!selectedProjectVisible) {
+        this.predictionSelection.projectId = '';
+      }
+    }
+
+    if (this.selectedPredictionDetail && this.selectedPredictionDetail.location !== this.predictionLocationFilter && this.predictionLocationFilter) {
+      this.selectedPredictionDetail = this.filteredRecentPredictions[0] ?? null;
+    }
+
+    if (this.selectedFinancialDetail && this.selectedFinancialDetail.location !== this.predictionLocationFilter && this.predictionLocationFilter) {
+      this.selectedFinancialDetail = this.filteredRecentFinancialPredictions[0] ?? null;
+    }
+  }
+
+  onEvmLocationFilterChange(): void {
+    if (this.evmSelection.projectId) {
+      const selectedProjectVisible = this.filteredEvmProjects.some(
+        (item) => item.projectId === this.evmSelection.projectId
+      );
+
+      if (!selectedProjectVisible) {
+        this.evmSelection.projectId = '';
+      }
+    }
+
+    if (this.selectedEvmDetail && this.selectedEvmDetail.location !== this.evmLocationFilter && this.evmLocationFilter) {
+      this.selectedEvmDetail = this.filteredRecentEvm[0] ?? null;
+    }
+  }
+
   loadActionHistory(projectId: string, showLoading = false): void {
     if (showLoading) {
       this.loading = true;
@@ -519,6 +698,22 @@ export class AppComponent implements OnInit {
     return new Date(value).toLocaleString('es-CO');
   }
 
+  pdfFileName(location: string, projectName: string): string {
+    return this.reportFileName(location, projectName, 'pdf');
+  }
+
+  excelFileName(location: string, projectName: string): string {
+    return this.reportFileName(location, projectName, 'xlsx');
+  }
+
+  private reportFileName(location: string, projectName: string, extension: string): string {
+    const cleanLocation = this.sanitizeFileNamePart(location);
+    const cleanProjectName = this.sanitizeFileNamePart(projectName);
+    const parts = [cleanLocation, cleanProjectName].filter((part) => part.length > 0);
+    const baseName = parts.length > 0 ? parts.join(' - ') : 'reporte';
+    return `${baseName}.${extension}`;
+  }
+
   private validateProjectForm(): string[] {
     const errors: string[] = [];
 
@@ -558,5 +753,44 @@ export class AppComponent implements OnInit {
       durationMonths: null,
       baseCostCop: null
     };
+  }
+
+  private saveFileResponse(response: HttpResponse<Blob>, fallbackName: string): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const file = response.body;
+    if (!file) {
+      this.error = 'La respuesta del servidor no incluyo el archivo solicitado.';
+      this.success = '';
+      return;
+    }
+
+    const fileName = fallbackName;
+    const objectUrl = URL.createObjectURL(file);
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  private sanitizeFileNamePart(value: string): string {
+    return value
+      .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/[.\- ]+$/g, '');
+  }
+
+  private filterByLocation<T extends { location: string }>(items: T[], location: string): T[] {
+    if (!location) {
+      return items;
+    }
+
+    return items.filter((item) => item.location === location);
   }
 }
