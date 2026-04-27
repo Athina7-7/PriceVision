@@ -158,28 +158,28 @@
             </article>
           </div>
 
-          <div class="chart-card" *ngIf="selectedPredictionDetail">
+          <div class="chart-card" *ngIf="selectedPredictionDetail as predictionDetail">
             <div class="card-header">
               <h3>Detalle de prediccion</h3>
               <div class="card-actions-group">
                 <button
                   type="button"
                   class="inline-action"
-                  [disabled]="!selectedPredictionDetail.predictionId || isPredictionDownloading(selectedPredictionDetail.predictionId)"
-                  (click)="downloadPredictionPdf(selectedPredictionDetail.predictionId, pdfFileName(selectedPredictionDetail.location, selectedPredictionDetail.projectName))">
-                  {{ isPredictionDownloading(selectedPredictionDetail.predictionId) ? 'Descargando...' : 'Descargar PDF' }}
+                  [disabled]="!predictionDetail.predictionId || isPredictionDownloading(predictionDetail.predictionId)"
+                  (click)="downloadPredictionPdf(predictionDetail.predictionId, pdfFileName(predictionDetail.location, predictionDetail.projectName))">
+                  {{ isPredictionDownloading(predictionDetail.predictionId) ? 'Descargando...' : 'Descargar PDF' }}
                 </button>
                 <button
                   type="button"
                   class="inline-action secondary-inline-action"
-                  [disabled]="!selectedPredictionDetail.predictionId || isPredictionExcelDownloading(selectedPredictionDetail.predictionId)"
-                  (click)="downloadPredictionExcel(selectedPredictionDetail.predictionId, excelFileName(selectedPredictionDetail.location, selectedPredictionDetail.projectName))">
-                  {{ isPredictionExcelDownloading(selectedPredictionDetail.predictionId) ? 'Descargando...' : 'Descargar Excel' }}
+                  [disabled]="!predictionDetail.predictionId || isPredictionExcelDownloading(predictionDetail.predictionId)"
+                  (click)="downloadPredictionExcel(predictionDetail.predictionId, excelFileName(predictionDetail.location, predictionDetail.projectName))">
+                  {{ isPredictionExcelDownloading(predictionDetail.predictionId) ? 'Descargando...' : 'Descargar Excel' }}
                 </button>
                 <button
                   type="button"
                   class="inline-action ghost-inline-action"
-                  [disabled]="!selectedPredictionDetail.predictionId"
+                  [disabled]="!predictionDetail.predictionId"
                   (click)="togglePredictionChart()">
                   {{ showPredictionChart ? 'Ocultar grafica' : 'Vista grafica' }}
                 </button>
@@ -188,46 +188,47 @@
             <div class="detail-grid">
               <div>
                 <span>Proyecto</span>
-                <strong>{{ selectedPredictionDetail.projectName }}</strong>
+                <strong>{{ predictionDetail.projectName }}</strong>
               </div>
               <div>
                 <span>Modelo(s) elegidos</span>
                 <strong>
-                  {{ selectedPredictionDetail.predictedMaterials ? 'Materiales' : '' }}
-                  {{ selectedPredictionDetail.predictedMaterials && selectedPredictionDetail.predictedLabor ? ' + ' : '' }}
-                  {{ selectedPredictionDetail.predictedLabor ? 'Mano de obra' : '' }}
+                  {{ predictionDetail.predictedMaterials ? 'Materiales' : '' }}
+                  {{ predictionDetail.predictedMaterials && predictionDetail.predictedLabor ? ' + ' : '' }}
+                  {{ predictionDetail.predictedLabor ? 'Mano de obra' : '' }}
                 </strong>
               </div>
               <div>
                 <span>Fecha</span>
-                <strong>{{ asDateTime(selectedPredictionDetail.createdAtUtc) }}</strong>
+                <strong>{{ asDateTime(predictionDetail.createdAtUtc) }}</strong>
               </div>
               <div>
                 <span>Area registrada</span>
-                <strong>{{ selectedPredictionDetail.areaM2 }} m2</strong>
+                <strong>{{ predictionDetail.areaM2 }} m2</strong>
               </div>
               <div>
                 <span>Tipo / ubicacion</span>
-                <strong>{{ selectedPredictionDetail.type }} / {{ selectedPredictionDetail.location }}</strong>
+                <strong>{{ predictionDetail.type }} / {{ predictionDetail.location }}</strong>
               </div>
               <div>
                 <span>Duracion / costo base</span>
-                <strong>{{ selectedPredictionDetail.durationMonths }} meses / {{ formatCop(selectedPredictionDetail.baseCostCop) }}</strong>
+                <strong>{{ predictionDetail.durationMonths }} meses / {{ formatCop(predictionDetail.baseCostCop) }}</strong>
               </div>
-              <div *ngIf="selectedPredictionDetail.predictedMaterials">
+              <div *ngIf="predictionDetail.predictedMaterials">
                 <span>Materiales</span>
-                <strong>{{ selectedPredictionDetail.estimatedMaterialQuantity | number:'1.0-2' }}</strong>
+                <strong>{{ predictionDetail.estimatedMaterialQuantity | number:'1.0-2' }}</strong>
               </div>
-              <div *ngIf="selectedPredictionDetail.predictedMaterials">
+              <div *ngIf="predictionDetail.predictedMaterials">
                 <span>Costo materiales</span>
-                <strong>{{ formatCop(selectedPredictionDetail.estimatedMaterialCostCop) }}</strong>
+                <strong>{{ formatCop(predictionDetail.estimatedMaterialCostCop) }}</strong>
               </div>
-              <div *ngIf="selectedPredictionDetail.predictedLabor">
+              <div *ngIf="predictionDetail.predictedLabor">
                 <span>Mano de obra</span>
-                <strong>{{ selectedPredictionDetail.requiredLaborHours | number:'1.0-2' }} horas-persona</strong>
+                <strong>{{ predictionDetail.requiredLaborHours | number:'1.0-2' }} horas-persona</strong>
               </div>
             </div>
             <div class="comparison-chart-card" *ngIf="showPredictionChart">
+              <ng-container *ngIf="predictionCostComparisonGeometry() as predictionGeometry">
               <div class="comparison-chart-header">
                 <div>
                   <span>Comparacion</span>
@@ -240,72 +241,73 @@
               <svg viewBox="0 0 860 260" role="img" aria-label="Grafica comparativa de costo planificado y estimado en prediccion">
                 <line x1="56" y1="232" x2="804" y2="232" class="axis-line"></line>
                 <line x1="56" y1="28" x2="56" y2="232" class="axis-line"></line>
-                <polygon class="variance-area variance-area-ev" [attr.points]="predictionCostComparisonGeometry().varianceArea"></polygon>
-                <polyline class="line pv reference-line" [attr.points]="predictionCostComparisonGeometry().plannedLine"></polyline>
-                <polyline class="line ev comparison-slope" [attr.points]="predictionCostComparisonGeometry().estimatedLine"></polyline>
+                <polygon class="variance-area variance-area-ev" [attr.points]="predictionGeometry.varianceArea"></polygon>
+                <polyline class="line pv reference-line" [attr.points]="predictionGeometry.plannedLine"></polyline>
+                <polyline class="line ev comparison-slope" [attr.points]="predictionGeometry.estimatedLine"></polyline>
                 <line
                   class="delta-line"
-                  [attr.x1]="predictionCostComparisonGeometry().rightX"
-                  [attr.y1]="predictionCostComparisonGeometry().plannedY"
-                  [attr.x2]="predictionCostComparisonGeometry().rightX"
-                  [attr.y2]="predictionCostComparisonGeometry().estimatedY">
+                  [attr.x1]="predictionGeometry.rightX"
+                  [attr.y1]="predictionGeometry.plannedY"
+                  [attr.x2]="predictionGeometry.rightX"
+                  [attr.y2]="predictionGeometry.estimatedY">
                 </line>
-                <circle [attr.cx]="predictionCostComparisonGeometry().leftX" [attr.cy]="predictionCostComparisonGeometry().plannedY" r="5" class="point point-pv"></circle>
-                <circle [attr.cx]="predictionCostComparisonGeometry().rightX" [attr.cy]="predictionCostComparisonGeometry().plannedY" r="5" class="point point-pv"></circle>
-                <circle [attr.cx]="predictionCostComparisonGeometry().rightX" [attr.cy]="predictionCostComparisonGeometry().estimatedY" r="6" class="point point-ev highlight-point"></circle>
-                <text [attr.x]="predictionCostComparisonGeometry().labelX" [attr.y]="predictionCostComparisonGeometry().labelY" class="variance-label">
+                <circle [attr.cx]="predictionGeometry.leftX" [attr.cy]="predictionGeometry.plannedY" r="5" class="point point-pv"></circle>
+                <circle [attr.cx]="predictionGeometry.rightX" [attr.cy]="predictionGeometry.plannedY" r="5" class="point point-pv"></circle>
+                <circle [attr.cx]="predictionGeometry.rightX" [attr.cy]="predictionGeometry.estimatedY" r="6" class="point point-ev highlight-point"></circle>
+                <text [attr.x]="predictionGeometry.labelX" [attr.y]="predictionGeometry.labelY" class="variance-label">
                   {{ predictionDeviationPercentage | number:'1.2-2' }}%
                 </text>
                 <text x="56" y="250" class="axis-label">Inicio</text>
                 <text x="770" y="250" class="axis-label">Comparacion</text>
               </svg>
               <div class="legend comparison-legend">
-                <span><i class="dot pv"></i> Planificado: {{ formatCop(selectedPredictionDetail.baseCostCop) }}</span>
+                <span><i class="dot pv"></i> Planificado: {{ formatCop(predictionDetail.baseCostCop) }}</span>
                 <span><i class="dot ev"></i> Estimado: {{ formatCop(predictionEstimatedCost) }}</span>
               </div>
+              </ng-container>
             </div>
           </div>
 
-          <div class="chart-card" *ngIf="selectedFinancialDetail">
+          <div class="chart-card" *ngIf="selectedFinancialDetail as financialDetail">
             <h3>Detalle de prediccion financiera</h3>
             <div class="financial-hero">
               <div>
                 <span>Proyecto</span>
-                <h4>{{ selectedFinancialDetail.projectName }}</h4>
+                <h4>{{ financialDetail.projectName }}</h4>
               </div>
               <div>
                 <span>Fecha</span>
-                <strong>{{ asDateTime(selectedFinancialDetail.createdAtUtc) }}</strong>
+                <strong>{{ asDateTime(financialDetail.createdAtUtc) }}</strong>
               </div>
             </div>
 
             <div class="financial-kpis">
               <article>
                 <span>Costo total estimado</span>
-                <strong>{{ formatCop(selectedFinancialDetail.estimatedTotalCostCop) }}</strong>
+                <strong>{{ formatCop(financialDetail.estimatedTotalCostCop) }}</strong>
               </article>
               <article>
                 <span>Rango estimado</span>
-                <strong>{{ formatCop(selectedFinancialDetail.minimumEstimatedCostCop) }} - {{ formatCop(selectedFinancialDetail.maximumEstimatedCostCop) }}</strong>
+                <strong>{{ formatCop(financialDetail.minimumEstimatedCostCop) }} - {{ formatCop(financialDetail.maximumEstimatedCostCop) }}</strong>
               </article>
               <article>
                 <span>Nivel de confianza</span>
-                <strong>{{ selectedFinancialDetail.confidencePercentage | number:'1.0-2' }}% / {{ selectedFinancialDetail.confidenceLevel }}</strong>
+                <strong>{{ financialDetail.confidencePercentage | number:'1.0-2' }}% / {{ financialDetail.confidenceLevel }}</strong>
               </article>
             </div>
 
             <div class="detail-grid financial-detail-grid">
               <div>
                 <span>Area / tipo / ubicacion</span>
-                <strong>{{ selectedFinancialDetail.areaM2 }} m2 / {{ selectedFinancialDetail.type }} / {{ selectedFinancialDetail.location }}</strong>
+                <strong>{{ financialDetail.areaM2 }} m2 / {{ financialDetail.type }} / {{ financialDetail.location }}</strong>
               </div>
               <div>
                 <span>Duracion / costo base</span>
-                <strong>{{ selectedFinancialDetail.durationMonths }} meses / {{ formatCop(selectedFinancialDetail.baseCostCop) }}</strong>
+                <strong>{{ financialDetail.durationMonths }} meses / {{ formatCop(financialDetail.baseCostCop) }}</strong>
               </div>
               <div>
                 <span>Historico por m2 / tendencia ubicacion</span>
-                <strong>{{ formatCop(selectedFinancialDetail.historicalAverageCostPerM2Cop) }} / x{{ selectedFinancialDetail.locationTrendFactor | number:'1.2-2' }}</strong>
+                <strong>{{ formatCop(financialDetail.historicalAverageCostPerM2Cop) }} / x{{ financialDetail.locationTrendFactor | number:'1.2-2' }}</strong>
               </div>
               <div>
                 <span>Lectura rapida</span>
@@ -433,28 +435,28 @@
             </article>
           </div>
 
-          <div class="chart-card" *ngIf="selectedEvmDetail">
+          <div class="chart-card" *ngIf="selectedEvmDetail as evmDetail">
             <div class="card-header">
               <h3>Detalle EVM</h3>
               <div class="card-actions-group">
                 <button
                   type="button"
                   class="inline-action"
-                  [disabled]="!selectedEvmDetail.recordId || isEvmDownloading(selectedEvmDetail.recordId)"
-                  (click)="downloadEvmPdf(selectedEvmDetail.recordId, pdfFileName(selectedEvmDetail.location, selectedEvmDetail.projectName))">
-                  {{ isEvmDownloading(selectedEvmDetail.recordId) ? 'Descargando...' : 'Descargar PDF' }}
+                  [disabled]="!evmDetail.recordId || isEvmDownloading(evmDetail.recordId)"
+                  (click)="downloadEvmPdf(evmDetail.recordId, pdfFileName(evmDetail.location, evmDetail.projectName))">
+                  {{ isEvmDownloading(evmDetail.recordId) ? 'Descargando...' : 'Descargar PDF' }}
                 </button>
                 <button
                   type="button"
                   class="inline-action secondary-inline-action"
-                  [disabled]="!selectedEvmDetail.recordId || isEvmExcelDownloading(selectedEvmDetail.recordId)"
-                  (click)="downloadEvmExcel(selectedEvmDetail.recordId, excelFileName(selectedEvmDetail.location, selectedEvmDetail.projectName))">
-                  {{ isEvmExcelDownloading(selectedEvmDetail.recordId) ? 'Descargando...' : 'Descargar Excel' }}
+                  [disabled]="!evmDetail.recordId || isEvmExcelDownloading(evmDetail.recordId)"
+                  (click)="downloadEvmExcel(evmDetail.recordId, excelFileName(evmDetail.location, evmDetail.projectName))">
+                  {{ isEvmExcelDownloading(evmDetail.recordId) ? 'Descargando...' : 'Descargar Excel' }}
                 </button>
                 <button
                   type="button"
                   class="inline-action ghost-inline-action"
-                  [disabled]="!selectedEvmDetail.recordId"
+                  [disabled]="!evmDetail.recordId"
                   (click)="toggleEvmChart()">
                   {{ showEvmChart ? 'Ocultar grafica' : 'Vista grafica' }}
                 </button>
@@ -463,42 +465,43 @@
             <div class="detail-grid">
               <div>
                 <span>Proyecto</span>
-                <strong>{{ selectedEvmDetail.projectName }}</strong>
+                <strong>{{ evmDetail.projectName }}</strong>
               </div>
               <div>
                 <span>Registro del proyecto</span>
-                <strong>{{ selectedEvmDetail.type }} / {{ selectedEvmDetail.location }}</strong>
+                <strong>{{ evmDetail.type }} / {{ evmDetail.location }}</strong>
               </div>
               <div>
                 <span>Periodo</span>
-                <strong>{{ asDateTime(selectedEvmDetail.periodDateUtc) }}</strong>
+                <strong>{{ asDateTime(evmDetail.periodDateUtc) }}</strong>
               </div>
               <div>
                 <span>Area / duracion</span>
-                <strong>{{ selectedEvmDetail.areaM2 }} m2 / {{ selectedEvmDetail.durationMonths }} meses</strong>
+                <strong>{{ evmDetail.areaM2 }} m2 / {{ evmDetail.durationMonths }} meses</strong>
               </div>
               <div>
                 <span>Costo base</span>
-                <strong>{{ formatCop(selectedEvmDetail.baseCostCop) }}</strong>
+                <strong>{{ formatCop(evmDetail.baseCostCop) }}</strong>
               </div>
               <div>
                 <span>PV / EV / AC</span>
-                <strong>{{ formatCop(selectedEvmDetail.pv) }} / {{ formatCop(selectedEvmDetail.ev) }} / {{ formatCop(selectedEvmDetail.ac) }}</strong>
+                <strong>{{ formatCop(evmDetail.pv) }} / {{ formatCop(evmDetail.ev) }} / {{ formatCop(evmDetail.ac) }}</strong>
               </div>
               <div>
                 <span>CPI / SPI</span>
-                <strong>{{ selectedEvmDetail.cpi | number:'1.2-4' }} / {{ selectedEvmDetail.spi | number:'1.2-4' }}</strong>
+                <strong>{{ evmDetail.cpi | number:'1.2-4' }} / {{ evmDetail.spi | number:'1.2-4' }}</strong>
               </div>
               <div>
                 <span>Presupuesto</span>
-                <strong>{{ selectedEvmDetail.costInterpretation }}</strong>
+                <strong>{{ evmDetail.costInterpretation }}</strong>
               </div>
               <div>
                 <span>Cronograma</span>
-                <strong>{{ selectedEvmDetail.scheduleInterpretation }}</strong>
+                <strong>{{ evmDetail.scheduleInterpretation }}</strong>
               </div>
             </div>
             <div class="comparison-chart-card" *ngIf="showEvmChart">
+              <ng-container *ngIf="evmCostComparisonGeometry() as evmGeometry">
               <div class="comparison-chart-header">
                 <div>
                   <span>Comparacion</span>
@@ -511,29 +514,30 @@
               <svg viewBox="0 0 860 260" role="img" aria-label="Grafica comparativa de costo planificado y estimado en EVM">
                 <line x1="56" y1="232" x2="804" y2="232" class="axis-line"></line>
                 <line x1="56" y1="28" x2="56" y2="232" class="axis-line"></line>
-                <polygon class="variance-area variance-area-ac" [attr.points]="evmCostComparisonGeometry().varianceArea"></polygon>
-                <polyline class="line pv reference-line" [attr.points]="evmCostComparisonGeometry().plannedLine"></polyline>
-                <polyline class="line ac comparison-slope" [attr.points]="evmCostComparisonGeometry().estimatedLine"></polyline>
+                <polygon class="variance-area variance-area-ac" [attr.points]="evmGeometry.varianceArea"></polygon>
+                <polyline class="line pv reference-line" [attr.points]="evmGeometry.plannedLine"></polyline>
+                <polyline class="line ac comparison-slope" [attr.points]="evmGeometry.estimatedLine"></polyline>
                 <line
                   class="delta-line"
-                  [attr.x1]="evmCostComparisonGeometry().rightX"
-                  [attr.y1]="evmCostComparisonGeometry().plannedY"
-                  [attr.x2]="evmCostComparisonGeometry().rightX"
-                  [attr.y2]="evmCostComparisonGeometry().estimatedY">
+                  [attr.x1]="evmGeometry.rightX"
+                  [attr.y1]="evmGeometry.plannedY"
+                  [attr.x2]="evmGeometry.rightX"
+                  [attr.y2]="evmGeometry.estimatedY">
                 </line>
-                <circle [attr.cx]="evmCostComparisonGeometry().leftX" [attr.cy]="evmCostComparisonGeometry().plannedY" r="5" class="point point-pv"></circle>
-                <circle [attr.cx]="evmCostComparisonGeometry().rightX" [attr.cy]="evmCostComparisonGeometry().plannedY" r="5" class="point point-pv"></circle>
-                <circle [attr.cx]="evmCostComparisonGeometry().rightX" [attr.cy]="evmCostComparisonGeometry().estimatedY" r="6" class="point point-ac highlight-point"></circle>
-                <text [attr.x]="evmCostComparisonGeometry().labelX" [attr.y]="evmCostComparisonGeometry().labelY" class="variance-label">
+                <circle [attr.cx]="evmGeometry.leftX" [attr.cy]="evmGeometry.plannedY" r="5" class="point point-pv"></circle>
+                <circle [attr.cx]="evmGeometry.rightX" [attr.cy]="evmGeometry.plannedY" r="5" class="point point-pv"></circle>
+                <circle [attr.cx]="evmGeometry.rightX" [attr.cy]="evmGeometry.estimatedY" r="6" class="point point-ac highlight-point"></circle>
+                <text [attr.x]="evmGeometry.labelX" [attr.y]="evmGeometry.labelY" class="variance-label">
                   {{ evmDeviationPercentage | number:'1.2-2' }}%
                 </text>
                 <text x="56" y="250" class="axis-label">Inicio</text>
                 <text x="770" y="250" class="axis-label">Comparacion</text>
               </svg>
               <div class="legend comparison-legend">
-                <span><i class="dot pv"></i> Planificado (PV): {{ formatCop(selectedEvmDetail.pv) }}</span>
-                <span><i class="dot ac"></i> Estimado (AC): {{ formatCop(selectedEvmDetail.ac) }}</span>
+                <span><i class="dot pv"></i> Planificado (PV): {{ formatCop(evmDetail.pv) }}</span>
+                <span><i class="dot ac"></i> Estimado (AC): {{ formatCop(evmDetail.ac) }}</span>
               </div>
+              </ng-container>
             </div>
           </div>
         </div>
