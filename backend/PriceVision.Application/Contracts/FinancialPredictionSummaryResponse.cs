@@ -14,6 +14,12 @@ public sealed record FinancialPredictionSummaryResponse(
     decimal MaximumEstimatedCostCop,
     float ConfidencePercentage,
     string ConfidenceLevel,
+    decimal StandardError,
+    decimal ConfidenceIntervalLower,
+    decimal ConfidenceIntervalUpper,
+    string ConfidenceExplanation,
     decimal HistoricalAverageCostPerM2Cop,
     decimal LocationTrendFactor,
+    string ModelType,
+    string ModelVersion,
     DateTime CreatedAtUtc);

@@ -27,6 +27,7 @@ public sealed class PriceVisionDbContext(DbContextOptions<PriceVisionDbContext> 
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Type).HasMaxLength(100).IsRequired();
             entity.Property(x => x.Location).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.ModelType).HasMaxLength(100).IsRequired();
             entity.Property(x => x.ModelVersion).HasMaxLength(50).IsRequired();
             entity.Property(x => x.EstimatedMaterialCostCop).HasPrecision(18, 2);
             entity.HasIndex(x => x.ProjectId);
@@ -58,6 +59,12 @@ public sealed class PriceVisionDbContext(DbContextOptions<PriceVisionDbContext> 
             entity.Property(x => x.HistoricalAverageCostPerM2Cop).HasPrecision(18, 2);
             entity.Property(x => x.LocationTrendFactor).HasPrecision(18, 4);
             entity.Property(x => x.ConfidenceLevel).HasMaxLength(30).IsRequired();
+            entity.Property(x => x.StandardError).HasPrecision(18, 2);
+            entity.Property(x => x.ConfidenceIntervalLower).HasPrecision(18, 2);
+            entity.Property(x => x.ConfidenceIntervalUpper).HasPrecision(18, 2);
+            entity.Property(x => x.ConfidenceExplanation).HasMaxLength(300).IsRequired();
+            entity.Property(x => x.ModelType).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.ModelVersion).HasMaxLength(50).IsRequired();
             entity.HasIndex(x => x.ProjectId);
             entity.HasIndex(x => x.CreatedAtUtc);
         });

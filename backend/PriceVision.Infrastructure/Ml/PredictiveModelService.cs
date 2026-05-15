@@ -109,6 +109,7 @@ public sealed class PredictiveModelService(IHostEnvironment environment) : IPred
             EstimatedMaterialQuantity = result.MaterialesEstimados.Quantity,
             EstimatedMaterialCostCop = result.MaterialesEstimados.CostCop,
             RequiredLaborHours = result.ManoObraRequeridaHorasPersona,
+            ModelType = PredictiveModelMetadata.CostPredictionModelType,
             ModelVersion = ReadModelVersion(),
             CreatedAtUtc = DateTime.UtcNow
         };
@@ -190,10 +191,10 @@ public sealed class PredictiveModelService(IHostEnvironment environment) : IPred
     {
         if (!File.Exists(_versionPath))
         {
-            return "unknown";
+            return PredictiveModelMetadata.DefaultModelVersion;
         }
 
         var version = File.ReadAllText(_versionPath).Trim();
-        return string.IsNullOrWhiteSpace(version) ? "unknown" : version;
+        return string.IsNullOrWhiteSpace(version) ? PredictiveModelMetadata.DefaultModelVersion : version;
     }
 }

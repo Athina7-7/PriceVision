@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PriceVision.Infrastructure.Ml;
 
 namespace PriceVision.Infrastructure.Persistence;
 
@@ -14,6 +15,8 @@ public static class DatabaseSchemaInitializer
         await EnsurePredictionColumnAsync(dbContext, "AreaM2", "REAL NOT NULL DEFAULT 0", cancellationToken);
         await EnsurePredictionColumnAsync(dbContext, "PredictedMaterials", "INTEGER NOT NULL DEFAULT 1", cancellationToken);
         await EnsurePredictionColumnAsync(dbContext, "PredictedLabor", "INTEGER NOT NULL DEFAULT 1", cancellationToken);
+        await EnsurePredictionColumnAsync(dbContext, "ModelType", $"TEXT NOT NULL DEFAULT '{PredictiveModelMetadata.CostPredictionModelType}'", cancellationToken);
+        await EnsurePredictionColumnAsync(dbContext, "ModelVersion", $"TEXT NOT NULL DEFAULT '{PredictiveModelMetadata.DefaultModelVersion}'", cancellationToken);
 
         const string createEvmTableSql = """
             CREATE TABLE IF NOT EXISTS "EVM_Records" (
@@ -128,12 +131,56 @@ public static class DatabaseSchemaInitializer
                 "MaximumEstimatedCostCop" TEXT NOT NULL,
                 "ConfidencePercentage" REAL NOT NULL,
                 "ConfidenceLevel" TEXT NOT NULL,
+                "StandardError" TEXT NOT NULL DEFAULT '0',
+                "ConfidenceIntervalLower" TEXT NOT NULL DEFAULT '0',
+                "ConfidenceIntervalUpper" TEXT NOT NULL DEFAULT '0',
+                "ConfidenceExplanation" TEXT NOT NULL DEFAULT '',
                 "HistoricalAverageCostPerM2Cop" TEXT NOT NULL,
                 "LocationTrendFactor" TEXT NOT NULL,
+                "ModelType" TEXT NOT NULL DEFAULT 'FinancialForecast',
+                "ModelVersion" TEXT NOT NULL DEFAULT 'v1.0.0',
                 "CreatedAtUtc" TEXT NOT NULL
             );
             """;
 
         await dbContext.Database.ExecuteSqlRawAsync(createFinancialPredictionsSql, cancellationToken);
+        await EnsureFinancialPredictionColumnAsync(dbContext, "StandardError", "TEXT NOT NULL DEFAULT '0'", cancellationToken);
+        await EnsureFinancialPredictionColumnAsync(dbContext, "ConfidenceIntervalLower", "TEXT NOT NULL DEFAULT '0'", cancellationToken);
+        await EnsureFinancialPredictionColumnAsync(dbContext, "ConfidenceIntervalUpper", "TEXT NOT NULL DEFAULT '0'", cancellationToken);
+        await EnsureFinancialPredictionColumnAsync(dbContext, "ConfidenceExplanation", "TEXT NOT NULL DEFAULT ''", cancellationToken);
+        await EnsureFinancialPredictionColumnAsync(dbContext, "ModelType", $"TEXT NOT NULL DEFAULT '{PredictiveModelMetadata.FinancialForecastModelType}'", cancellationToken);
+        await EnsureFinancialPredictionColumnAsync(dbContext, "ModelVersion", $"TEXT NOT NULL DEFAULT '{PredictiveModelMetadata.DefaultModelVersion}'", cancellationToken);
+    }
+
+    private static async Task EnsureFinancialPredictionColumnAsync(PriceVisionDbContext dbContext, string columnName, string columnSqlType, CancellationToken cancellationToken)
+    {
+        await using var connection = dbContext.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        await using var inspectCommand = connection.CreateCommand();
+        inspectCommand.CommandText = "PRAGMA table_info('FinancialPredictions');";
+
+        var exists = false;
+        await using (var reader = await inspectCommand.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+
+        if (!exists)
+        {
+            await using var alterCommand = connection.CreateCommand();
+            alterCommand.CommandText = $"ALTER TABLE \"FinancialPredictions\" ADD COLUMN \"{columnName}\" {columnSqlType};";
+            await alterCommand.ExecuteNonQueryAsync(cancellationToken);
+        }
     }
 }

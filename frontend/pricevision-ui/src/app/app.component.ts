@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
@@ -11,13 +11,17 @@ import {
   EvmSummaryResponse,
   EvmCalculationResponse,
   EvmHistoryPoint,
+  ExecutiveDashboardResponse,
   FinancialPredictionResponse,
   FinancialPredictionSummaryResponse,
   PredictionHistoryResponse,
   ProjectActionHistoryItem,
   ProjectPredictionResponse,
   ProjectSummaryResponse,
-  ProjectValidationWarningResponse
+  ProjectValidationWarningResponse,
+  SimulationResult,
+  VariableImportanceResponse,
+  SimilarProjectResponse
 } from './core/services/api.service';
 
 @Component({
@@ -30,12 +34,15 @@ import {
 export class AppComponent implements OnInit {
   title = 'PriceVision';
 
-  activeSection: 'registro' | 'prediccion' | 'evm' | 'historial' = 'registro';
+  activeSection: 'login' | 'registro' | 'prediccion' | 'simulacion' | 'evm' | 'historial' | 'dashboard' = 'login';
+  isAuthenticated = false;
+  currentUserRole = '';
 
   loading = false;
   error = '';
   success = '';
 
+  loginForm = { username: '', password: '' };
   selectedProject: ProjectSummaryResponse | null = null;
   latest: EvmCalculationResponse | null = null;
   history: EvmHistoryPoint[] = [];
@@ -43,18 +50,31 @@ export class AppComponent implements OnInit {
   actionHistory: ProjectActionHistoryItem[] = [];
   projects: ProjectSummaryResponse[] = [];
   recentPredictions: PredictionHistoryResponse[] = [];
+  variableImportance: VariableImportanceResponse[] = [];
   recentEvm: EvmSummaryResponse[] = [];
   selectedPredictionDetail: PredictionHistoryResponse | null = null;
   selectedFinancialDetail: FinancialPredictionSummaryResponse | null = null;
   selectedEvmDetail: EvmSummaryResponse | null = null;
+  executiveDashboard: ExecutiveDashboardResponse | null = null;
+  similarProjects: SimilarProjectResponse[] = [];
+  loadingSimilar = false;
+  simulationResult: SimulationResult | null = null;
   validationWarnings: ProjectValidationWarningResponse[] = [];
   recentFinancialPredictions: FinancialPredictionSummaryResponse[] = [];
   downloadingPredictionId = '';
   downloadingEvmId = '';
+  downloadingDashboardId = '';
   downloadingPredictionExcelId = '';
   downloadingEvmExcelId = '';
   showPredictionChart = false;
   showEvmChart = false;
+  
+  historyFilter = {
+    startDate: '',
+    endDate: '',
+    projectId: ''
+  };
+  financialHistory: FinancialPredictionSummaryResponse[] = [];
 
   form = {
     name: '',
@@ -75,6 +95,12 @@ export class AppComponent implements OnInit {
     projectId: ''
   };
 
+  simulationForm = {
+    projectId: '',
+    simulatedDurationMonths: null as number | null,
+    simulatedBaseCostCop: null as number | null
+  };
+
   predictionLocationFilter = '';
   evmLocationFilter = '';
 
@@ -84,6 +110,7 @@ export class AppComponent implements OnInit {
 
   constructor(
     private readonly apiService: ApiService,
+    private readonly http: HttpClient,
     @Inject(PLATFORM_ID) private readonly platformId: object
   ) {}
 
@@ -92,10 +119,56 @@ export class AppComponent implements OnInit {
       return;
     }
 
+    const token = localStorage.getItem('jwt_token');
+    const role = localStorage.getItem('user_role');
+    if (token) {
+      this.isAuthenticated = true;
+      this.currentUserRole = role ?? 'User';
+      this.activeSection = 'registro';
+      this.loadInitialData();
+    }
+  }
+
+  login(): void {
+    this.loading = true;
+    this.error = '';
+    this.http.post<any>('/api/auth/login', this.loginForm).subscribe({
+      next: (res) => {
+        localStorage.setItem('jwt_token', res.token);
+        localStorage.setItem('user_role', res.role);
+        this.isAuthenticated = true;
+        this.currentUserRole = res.role;
+        this.activeSection = 'registro';
+        this.loading = false;
+        this.loadInitialData();
+      },
+      error: () => {
+        this.error = 'Credenciales invalidas.';
+        this.loading = false;
+      }
+    });
+  }
+
+  logout(): void {
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('user_role');
+    this.isAuthenticated = false;
+    this.currentUserRole = '';
+    this.activeSection = 'login';
+    this.loginForm = { username: '', password: '' };
+  }
+
+  private loadInitialData(): void {
     this.loadProjects();
     this.loadRecentPredictions();
+    this.loadVariableImportance();
     this.loadRecentFinancialPredictions();
     this.loadRecentEvm();
+    this.loadFinancialHistory();
+  }
+
+  hasRole(allowedRoles: string[]): boolean {
+    return allowedRoles.includes(this.currentUserRole) || this.currentUserRole === 'Admin';
   }
 
   registerProject(): void {
@@ -132,6 +205,7 @@ export class AppComponent implements OnInit {
         this.validationWarnings = response.validationWarnings;
         this.predictionSelection.projectId = project.projectId;
         this.evmSelection.projectId = project.projectId;
+        this.prepareSimulationForm(project);
         this.success = response.validationWarnings.length > 0
           ? 'Proyecto registrado con advertencias historicas.'
           : 'Proyecto registrado correctamente.';
@@ -167,18 +241,6 @@ export class AppComponent implements OnInit {
       return;
     }
 
-    if (this.predictionSelection.predictMaterials && project.hasMaterialsPrediction) {
-      this.error = 'Ese proyecto ya tiene prediccion de materiales.';
-      this.success = '';
-      return;
-    }
-
-    if (this.predictionSelection.predictLabor && project.hasLaborPrediction) {
-      this.error = 'Ese proyecto ya tiene prediccion de mano de obra.';
-      this.success = '';
-      return;
-    }
-
     this.loading = true;
     this.error = '';
     this.success = '';
@@ -205,12 +267,15 @@ export class AppComponent implements OnInit {
           estimatedMaterialQuantity: result.materialesEstimados?.quantity ?? 0,
           estimatedMaterialCostCop: result.materialesEstimados?.costCop ?? 0,
           requiredLaborHours: result.manoObraRequeridaHorasPersona ?? 0,
+          modelType: result.modelType,
+          modelVersion: result.modelVersion,
           createdAtUtc: result.createdAtUtc
         };
         this.success = 'Prediccion generada correctamente.';
         this.loading = false;
         this.activeSection = 'prediccion';
         this.evmSelection.projectId = result.projectId;
+        this.simulationForm.projectId = result.projectId;
         this.loadProjects(result.projectId);
         this.loadActionHistory(result.projectId);
         this.loadRecentPredictions();
@@ -309,12 +374,6 @@ export class AppComponent implements OnInit {
       return;
     }
 
-    if (project.hasFinancialPrediction) {
-      this.error = 'Ese proyecto ya tiene una prediccion financiera registrada.';
-      this.success = '';
-      return;
-    }
-
     this.loading = true;
     this.error = '';
     this.success = '';
@@ -349,6 +408,9 @@ export class AppComponent implements OnInit {
           }
           if (match && !this.evmSelection.projectId) {
             this.evmSelection.projectId = match.projectId;
+          }
+          if (match && !this.simulationForm.projectId) {
+            this.prepareSimulationForm(match);
           }
         }
       },
@@ -400,10 +462,47 @@ export class AppComponent implements OnInit {
     });
   }
 
+  loadFinancialHistory(): void {
+    this.loading = true;
+    this.error = '';
+
+    if (this.historyFilter.startDate && this.historyFilter.endDate) {
+      if (new Date(this.historyFilter.startDate) > new Date(this.historyFilter.endDate)) {
+        this.error = 'La fecha inicial no puede ser mayor a la fecha final.';
+        this.loading = false;
+        return;
+      }
+    }
+
+    let url = '/api/financial-predictions/history?';
+    const params = new URLSearchParams();
+    if (this.historyFilter.startDate) params.append('startDate', this.historyFilter.startDate);
+    if (this.historyFilter.endDate) params.append('endDate', this.historyFilter.endDate);
+    if (this.historyFilter.projectId) params.append('projectId', this.historyFilter.projectId);
+
+    this.http.get<FinancialPredictionSummaryResponse[]>(url + params.toString()).subscribe({
+      next: (items) => {
+        this.financialHistory = items;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.error = err?.error?.error ?? 'Error al cargar el historial financiero.';
+        this.financialHistory = [];
+        this.loading = false;
+      }
+    });
+  }
+
+  clearHistoryFilter(): void {
+    this.historyFilter = { startDate: '', endDate: '', projectId: '' };
+    this.loadFinancialHistory();
+  }
+
   viewProject(project: ProjectSummaryResponse): void {
     this.selectedProject = project;
     this.predictionSelection.projectId = project.projectId;
     this.evmSelection.projectId = project.projectId;
+    this.prepareSimulationForm(project);
     this.prediction = null;
     this.latest = null;
     this.history = [];
@@ -412,13 +511,28 @@ export class AppComponent implements OnInit {
     this.activeSection = 'historial';
     this.loadActionHistory(project.projectId, true);
     this.loadEvmHistory(project.projectId, false);
+    this.loadSimilarProjects(project.projectId);
   }
 
   selectPredictionDetail(item: PredictionHistoryResponse): void {
     this.selectedPredictionDetail = item;
     this.predictionSelection.projectId = item.projectId;
     this.selectedProject = this.projects.find((project) => project.projectId === item.projectId) ?? this.selectedProject;
+    if (this.selectedProject) {
+      this.prepareSimulationForm(this.selectedProject);
+    }
     this.showPredictionChart = false;
+  }
+
+  loadVariableImportance(): void {
+    this.apiService.getVariableImportance().subscribe({
+      next: (items) => {
+        this.variableImportance = items;
+      },
+      error: () => {
+        this.variableImportance = [];
+      }
+    });
   }
 
   selectEvmDetail(item: EvmSummaryResponse): void {
@@ -433,6 +547,59 @@ export class AppComponent implements OnInit {
     this.selectedFinancialDetail = item;
     this.predictionSelection.projectId = item.projectId;
     this.selectedProject = this.projects.find((project) => project.projectId === item.projectId) ?? this.selectedProject;
+    if (this.selectedProject) {
+      this.prepareSimulationForm(this.selectedProject);
+    }
+  }
+
+  runSimulation(): void {
+    const simulatedDurationMonths = Number(this.simulationForm.simulatedDurationMonths);
+    const simulatedBaseCostCop = Number(this.simulationForm.simulatedBaseCostCop);
+
+    if (!this.simulationForm.projectId) {
+      this.error = 'Selecciona un proyecto para simular.';
+      this.success = '';
+      return;
+    }
+
+    if (!Number.isFinite(simulatedDurationMonths) || simulatedDurationMonths <= 0) {
+      this.error = 'La duracion simulada debe ser mayor que cero.';
+      this.success = '';
+      return;
+    }
+
+    if (!Number.isFinite(simulatedBaseCostCop) || simulatedBaseCostCop < 0) {
+      this.error = 'El costo base simulado debe ser mayor o igual que cero.';
+      this.success = '';
+      return;
+    }
+
+    this.loading = true;
+    this.error = '';
+    this.success = '';
+
+    this.apiService.simulateProject(this.simulationForm.projectId, {
+      simulatedDurationMonths,
+      simulatedBaseCostCop
+    }).subscribe({
+      next: (result) => {
+        this.simulationResult = result;
+        this.selectedProject = this.projects.find((project) => project.projectId === result.projectId) ?? this.selectedProject;
+        this.loading = false;
+        this.success = 'Simulacion generada sin alterar los datos originales.';
+      },
+      error: (err) => {
+        this.loading = false;
+        this.error = err?.error?.error ?? 'No fue posible ejecutar la simulacion.';
+      }
+    });
+  }
+
+  onSimulationProjectChange(): void {
+    const project = this.projects.find((item) => item.projectId === this.simulationForm.projectId);
+    if (project) {
+      this.prepareSimulationForm(project);
+    }
   }
 
   downloadPredictionPdf(predictionId: string, fallbackName: string, event?: Event): void {
@@ -535,6 +702,50 @@ export class AppComponent implements OnInit {
     });
   }
 
+  loadExecutiveDashboard(): void {
+    if (!this.selectedProject) {
+      this.error = 'Selecciona un proyecto para ver el dashboard.';
+      this.success = '';
+      return;
+    }
+    this.loading = true;
+    this.error = '';
+    this.success = '';
+    this.apiService.getExecutiveDashboard(this.selectedProject.projectId).subscribe({
+      next: (result: ExecutiveDashboardResponse) => {
+        this.executiveDashboard = result;
+        this.loading = false;
+        this.activeSection = 'dashboard';
+      },
+      error: (err: any) => {
+        this.loading = false;
+        this.error = err?.error?.error ?? 'No fue posible cargar el dashboard ejecutivo.';
+      }
+    });
+  }
+
+  downloadDashboardPdf(projectId: string, fallbackName: string, event?: Event): void {
+    event?.stopPropagation();
+    if (!projectId) return;
+    this.downloadingDashboardId = projectId;
+    this.error = '';
+    this.apiService.downloadExecutiveDashboardPdf(projectId).subscribe({
+      next: (response: HttpResponse<Blob>) => {
+        this.saveFileResponse(response, fallbackName);
+        this.success = 'Dashboard ejecutivo exportado correctamente.';
+        this.downloadingDashboardId = '';
+      },
+      error: (err: any) => {
+        this.downloadingDashboardId = '';
+        this.error = err?.error?.error ?? 'No fue posible descargar el PDF del dashboard.';
+      }
+    });
+  }
+
+  isDashboardDownloading(projectId: string): boolean {
+    return !!projectId && this.downloadingDashboardId === projectId;
+  }
+
   isPredictionDownloading(predictionId: string): boolean {
     return !!predictionId && this.downloadingPredictionId === predictionId;
   }
@@ -577,6 +788,45 @@ export class AppComponent implements OnInit {
       width,
       height
     );
+  }
+
+  simulationComparisonGeometry(width = 860, height = 260): ComparisonGeometry {
+    return this.buildComparisonGeometry(
+      this.simulationResult?.originalEstimatedTotalCostCop ?? 0,
+      this.simulationResult?.simulatedEstimatedTotalCostCop ?? 0,
+      width,
+      height
+    );
+  }
+
+  simulationMetricBarWidth(originalValue: number, simulatedValue: number, target: 'original' | 'simulated'): number {
+    const maxValue = Math.max(Math.abs(originalValue), Math.abs(simulatedValue), 1);
+    const value = target === 'original' ? Math.abs(originalValue) : Math.abs(simulatedValue);
+    return Math.max(4, (value / maxValue) * 100);
+  }
+
+  simulationMetricPercentage(originalValue: number, simulatedValue: number): number {
+    const original = Number(originalValue);
+    const simulated = Number(simulatedValue);
+
+    if (!Number.isFinite(original) || !Number.isFinite(simulated)) {
+      return 0;
+    }
+
+    if (original === 0) {
+      return simulated === 0 ? 0 : 100;
+    }
+
+    return ((simulated - original) / original) * 100;
+  }
+
+  simulationTotalCostPercentage(result: SimulationResult): number {
+    const totalCostMetric = result.metrics.find((metric) => metric.label === 'Costo estimado total (COP)');
+    if (totalCostMetric) {
+      return this.simulationMetricPercentage(totalCostMetric.originalValue, totalCostMetric.simulatedValue);
+    }
+
+    return this.simulationMetricPercentage(result.originalEstimatedTotalCostCop, result.simulatedEstimatedTotalCostCop);
   }
 
   get predictionEstimatedCost(): number {
@@ -717,6 +967,20 @@ export class AppComponent implements OnInit {
     });
   }
 
+  loadSimilarProjects(projectId: string): void {
+    this.loadingSimilar = true;
+    this.apiService.getSimilarProjects(projectId).subscribe({
+      next: (items) => {
+        this.similarProjects = items;
+        this.loadingSimilar = false;
+      },
+      error: () => {
+        this.similarProjects = [];
+        this.loadingSimilar = false;
+      }
+    });
+  }
+
   evmPoint(series: 'pv' | 'ev' | 'ac', width = 860, height = 260): string {
     const values = this.history.map((x) => x[series]);
     if (values.length < 2) {
@@ -750,6 +1014,28 @@ export class AppComponent implements OnInit {
 
   asDateTime(value: string): string {
     return new Date(value).toLocaleString('es-CO');
+  }
+
+  formatMetricValue(label: string, value: number): string {
+    if (label.includes('COP')) {
+      return this.formatCop(value);
+    }
+
+    return new Intl.NumberFormat('es-CO', {
+      maximumFractionDigits: 2
+    }).format(value);
+  }
+
+  financialConfidenceExplanation(item: FinancialPredictionSummaryResponse | FinancialPredictionResponse): string {
+    return item.confidenceExplanation || 'El nivel de confianza indica que, considerando el error estandar del modelo, es probable que el valor real se ubique dentro del intervalo estimado.';
+  }
+
+  financialConfidenceLower(item: FinancialPredictionSummaryResponse | FinancialPredictionResponse): number {
+    return item.confidenceIntervalLower || item.minimumEstimatedCostCop;
+  }
+
+  financialConfidenceUpper(item: FinancialPredictionSummaryResponse | FinancialPredictionResponse): number {
+    return item.confidenceIntervalUpper || item.maximumEstimatedCostCop;
   }
 
   pdfFileName(location: string, projectName: string): string {
@@ -807,6 +1093,15 @@ export class AppComponent implements OnInit {
       durationMonths: null,
       baseCostCop: null
     };
+  }
+
+  private prepareSimulationForm(project: ProjectSummaryResponse): void {
+    this.simulationForm = {
+      projectId: project.projectId,
+      simulatedDurationMonths: project.durationMonths,
+      simulatedBaseCostCop: project.baseCostCop
+    };
+    this.simulationResult = null;
   }
 
   private saveFileResponse(response: HttpResponse<Blob>, fallbackName: string): void {

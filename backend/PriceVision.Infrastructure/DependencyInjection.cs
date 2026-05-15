@@ -21,6 +21,9 @@ public static class DependencyInjection
         services.AddScoped<IPredictionRepository, PredictionRepository>();
         services.AddScoped<IFinancialPredictionRepository, FinancialPredictionRepository>();
         services.AddScoped<IFinancialForecastService, FinancialForecastService>();
+        services.AddScoped<IFinancialSimulationService, FinancialSimulationService>();
+        services.AddScoped<IStatisticalConfidenceService, StatisticalConfidenceService>();
+        services.AddScoped<IVariableImportanceService, VariableImportanceService>();
         services.AddScoped<IEvmRepository, EvmRepository>();
         services.AddScoped<IEvmService, EvmService>();
         services.AddSingleton<IModelTrainingService, ModelTrainingService>();

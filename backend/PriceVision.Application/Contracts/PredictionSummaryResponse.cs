@@ -14,4 +14,6 @@ public sealed record PredictionSummaryResponse(
     float EstimatedMaterialQuantity,
     decimal EstimatedMaterialCostCop,
     float RequiredLaborHours,
+    string ModelType,
+    string ModelVersion,
     DateTime CreatedAtUtc);
