@@ -1,4 +1,5 @@
 using PriceVision.Domain.Entities;
+using PriceVision.Application.Contracts;
 
 namespace PriceVision.Api.Reports;
 
@@ -35,6 +36,15 @@ internal sealed class ProjectPdfReportGenerator
 
         var document = new PdfDocumentWriter();
         document.AddPage(canvas => DrawEvmPage(canvas, project, selectedRecord, aggregate, financialPrediction, evmHistory), PageWidth, PageHeight);
+        return document.Build();
+    }
+
+    public byte[] GenerateExecutiveDashboardReport(
+        Project project,
+        ExecutiveDashboardResponse dashboard)
+    {
+        var document = new PdfDocumentWriter();
+        document.AddPage(canvas => DrawExecutiveDashboardPage(canvas, project, dashboard), PageWidth, PageHeight);
         return document.Build();
     }
 
@@ -278,6 +288,55 @@ internal sealed class ProjectPdfReportGenerator
             556f,
             8.5f,
             PdfTheme.MutedTextColor);
+    }
+
+    private static void DrawExecutiveDashboardPage(
+        PdfCanvas canvas,
+        Project project,
+        ExecutiveDashboardResponse dashboard)
+    {
+        canvas.FillRect(0f, 0f, canvas.Width, canvas.Height, PdfTheme.PageBackground);
+
+        DrawHeader(
+            canvas,
+            "Dashboard Ejecutivo",
+            project.Name,
+            $"Proyecto {ShortId(project.Id)}",
+            dashboard.LastUpdatedUtc,
+            "Resumen ejecutivo de desempeno");
+
+        var contentWidth = canvas.Width - (Margin * 2f);
+        var cardWidth = (contentWidth - 24f) / 3f;
+        var summaryY = 116f;
+
+        DrawSummaryCard(canvas, Margin, summaryY, cardWidth, 78f, "Costo Estimado Total", FormatCop(dashboard.EstimatedTotalCostCop), $"Presupuesto base: {FormatCop(project.BaseCostCop)}", PdfTheme.Accent);
+
+        var riskTheme = dashboard.RiskLevel switch {
+            "Bajo" => PdfTheme.Info,
+            "Medio" => PdfTheme.Warning,
+            "Alto" => PdfTheme.Danger,
+            _ => PdfTheme.Accent
+        };
+
+        DrawSummaryCard(canvas, Margin + cardWidth + 12f, summaryY, cardWidth, 78f, "Nivel de Riesgo", dashboard.RiskLevel, dashboard.RiskDescription, riskTheme);
+
+        DrawSummaryCard(canvas, Margin + ((cardWidth + 12f) * 2f), summaryY, cardWidth, 78f, "Desviacion Proyectada", FormatCop(dashboard.ProjectedDeviationCop), $"{FormatPercent((float)dashboard.ProjectedDeviationPercentage)} respecto al plan.", dashboard.ProjectedDeviationCop > 0 ? PdfTheme.Warning : PdfTheme.Info);
+
+        DrawPanel(
+            canvas,
+            Margin,
+            214f,
+            contentWidth,
+            136f,
+            "Indicadores de Desempeno (EVM)",
+            [
+                new("Indice de Costo (CPI)", dashboard.CPI.HasValue ? FormatRatio(dashboard.CPI.Value) : "N/A"),
+                new("Interpretacion CPI", (dashboard.CPI ?? 1m) >= 1m ? "Desempeno favorable o en presupuesto." : "Sobrecosto respecto al plan."),
+                new("Indice de Cronograma (SPI)", dashboard.SPI.HasValue ? FormatRatio(dashboard.SPI.Value) : "N/A"),
+                new("Interpretacion SPI", (dashboard.SPI ?? 1m) >= 1m ? "Avance segun o por encima del plan." : "Retraso respecto al plan.")
+            ]);
+
+        canvas.DrawText("Documento generado automaticamente por PriceVision. Resumen ejecutivo del proyecto.", Margin, 556f, 8.5f, PdfTheme.MutedTextColor);
     }
 
     private static void DrawHeader(PdfCanvas canvas, string title, string subtitle, string badge, DateTime generatedAtUtc, string caption)

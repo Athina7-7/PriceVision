@@ -1,3 +1,5 @@
+using System;
+
 namespace PriceVision.Application.Contracts;
 
 public sealed record FinancialPredictionResponse(
@@ -14,6 +16,13 @@ public sealed record FinancialPredictionResponse(
     decimal MaximumEstimatedCostCop,
     float ConfidencePercentage,
     string ConfidenceLevel,
+    decimal StandardError,
+    decimal ConfidenceIntervalLower,
+    decimal ConfidenceIntervalUpper,
+    string ConfidenceExplanation,
     decimal HistoricalAverageCostPerM2Cop,
     decimal LocationTrendFactor,
-    DateTime CreatedAtUtc);
+    string ModelType,
+    string ModelVersion,
+    DateTime CreatedAtUtc
+);

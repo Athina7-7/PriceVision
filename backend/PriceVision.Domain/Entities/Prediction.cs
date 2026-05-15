@@ -13,6 +13,7 @@ public sealed class Prediction
     public float EstimatedMaterialQuantity { get; set; }
     public decimal EstimatedMaterialCostCop { get; set; }
     public float RequiredLaborHours { get; set; }
+    public string ModelType { get; set; } = string.Empty;
     public string ModelVersion { get; set; } = string.Empty;
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }

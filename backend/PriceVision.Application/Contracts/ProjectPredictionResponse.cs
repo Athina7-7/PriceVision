@@ -12,5 +12,7 @@ public sealed record ProjectPredictionResponse(
     DateTime CreatedAtUtc,
     bool PredictMaterials,
     bool PredictLabor,
+    string ModelType,
+    string ModelVersion,
     MaterialsEstimate? MaterialesEstimados,
     float? ManoObraRequeridaHorasPersona);

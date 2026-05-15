@@ -11,6 +11,7 @@
     <nav>
       <button type="button" [class.active]="activeSection === 'registro'" (click)="activeSection = 'registro'">Registrar proyecto</button>
       <button type="button" [class.active]="activeSection === 'prediccion'" (click)="activeSection = 'prediccion'">Predicciones</button>
+      <button type="button" [class.active]="activeSection === 'simulacion'" (click)="activeSection = 'simulacion'">Simulacion</button>
       <button type="button" [class.active]="activeSection === 'evm'" (click)="activeSection = 'evm'">EVM</button>
       <button type="button" [class.active]="activeSection === 'historial'" (click)="activeSection = 'historial'">Historial</button>
     </nav>
@@ -156,6 +157,11 @@
               <h3>{{ prediction.manoObraRequeridaHorasPersona | number:'1.0-2' }}</h3>
               <small>horas-persona</small>
             </article>
+            <article>
+              <p>Modelo</p>
+              <h3>{{ prediction.modelType }}</h3>
+              <small>{{ prediction.modelVersion }}</small>
+            </article>
           </div>
 
           <div class="chart-card" *ngIf="selectedPredictionDetail as predictionDetail">
@@ -201,6 +207,14 @@
               <div>
                 <span>Fecha</span>
                 <strong>{{ asDateTime(predictionDetail.createdAtUtc) }}</strong>
+              </div>
+              <div>
+                <span>Tipo de modelo</span>
+                <strong>{{ predictionDetail.modelType }}</strong>
+              </div>
+              <div>
+                <span>Version del modelo</span>
+                <strong>{{ predictionDetail.modelVersion }}</strong>
               </div>
               <div>
                 <span>Area registrada</span>
@@ -268,6 +282,36 @@
             </div>
           </div>
 
+          <div class="chart-card">
+            <h3>Importancia de variables</h3>
+            <div class="empty-state" *ngIf="variableImportance.length === 0">
+              No hay datos de importancia disponibles.
+            </div>
+            <table *ngIf="variableImportance.length > 0">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Variable</th>
+                  <th>Importancia</th>
+                  <th>Coeficiente</th>
+                  <th>Impacto</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of variableImportance">
+                  <td>{{ item.rank }}</td>
+                  <td>{{ item.displayName }}</td>
+                  <td>
+                    <progress [value]="item.importancePercentage" max="100"></progress>
+                    {{ item.importancePercentage | number:'1.2-2' }}%
+                  </td>
+                  <td>{{ item.coefficient | number:'1.2-4' }}</td>
+                  <td>{{ item.direction }}. {{ item.interpretation }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
           <div class="chart-card" *ngIf="selectedFinancialDetail as financialDetail">
             <h3>Detalle de prediccion financiera</h3>
             <div class="financial-hero">
@@ -292,7 +336,10 @@
               </article>
               <article>
                 <span>Nivel de confianza</span>
-                <strong>{{ financialDetail.confidencePercentage | number:'1.0-2' }}% / {{ financialDetail.confidenceLevel }}</strong>
+                <strong>
+                  {{ financialDetail.confidencePercentage | number:'1.0-2' }}%
+                  <span class="tooltip-trigger" tabindex="0" [attr.title]="financialConfidenceExplanation(financialDetail)" [attr.aria-label]="financialConfidenceExplanation(financialDetail)">?</span>
+                </strong>
               </article>
             </div>
 
@@ -308,6 +355,22 @@
               <div>
                 <span>Historico por m2 / tendencia ubicacion</span>
                 <strong>{{ formatCop(financialDetail.historicalAverageCostPerM2Cop) }} / x{{ financialDetail.locationTrendFactor | number:'1.2-2' }}</strong>
+              </div>
+              <div>
+                <span>Intervalo estimado</span>
+                <strong>{{ formatCop(financialConfidenceLower(financialDetail)) }} - {{ formatCop(financialConfidenceUpper(financialDetail)) }}</strong>
+              </div>
+              <div>
+                <span>Error estandar</span>
+                <strong>{{ formatCop(financialDetail.standardError) }}</strong>
+              </div>
+              <div>
+                <span>Tipo de modelo</span>
+                <strong>{{ financialDetail.modelType }}</strong>
+              </div>
+              <div>
+                <span>Version del modelo</span>
+                <strong>{{ financialDetail.modelVersion }}</strong>
               </div>
               <div>
                 <span>Lectura rapida</span>
@@ -327,6 +390,7 @@
               <strong *ngIf="item.predictedMaterials">Materiales: {{ item.estimatedMaterialQuantity | number:'1.0-2' }}</strong>
               <strong *ngIf="item.predictedLabor">Mano de obra: {{ item.requiredLaborHours | number:'1.0-2' }}</strong>
               <small *ngIf="item.predictedMaterials">{{ formatCop(item.estimatedMaterialCostCop) }}</small>
+              <small>Modelo: {{ item.modelType }} / {{ item.modelVersion }}</small>
               <div class="recent-card-actions">
                 <button
                   type="button"
@@ -363,12 +427,132 @@
               <small>{{ item.location }}</small>
               <strong>Costo total: {{ formatCop(item.estimatedTotalCostCop) }}</strong>
               <small>Rango: {{ formatCop(item.minimumEstimatedCostCop) }} - {{ formatCop(item.maximumEstimatedCostCop) }}</small>
-              <small>Confianza: {{ item.confidencePercentage | number:'1.0-2' }}% / {{ item.confidenceLevel }}</small>
+              <small>Confianza: {{ item.confidencePercentage | number:'1.0-2' }}% | Intervalo: {{ formatCop(financialConfidenceLower(item)) }} - {{ formatCop(financialConfidenceUpper(item)) }}</small>
+              <small>Modelo: {{ item.modelType }} / {{ item.modelVersion }}</small>
             </article>
           </div>
           <div class="empty-state" *ngIf="filteredRecentFinancialPredictions.length === 0">
             Aun no hay predicciones financieras recientes.
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="activeSection === 'simulacion'" class="panel">
+      <div class="status">
+        <strong>Simulacion financiera:</strong>
+        Ajusta duracion y costo base para comparar alternativas sin modificar el proyecto original.
+      </div>
+
+      <div class="prediction-layout">
+        <div>
+          <div class="form-card">
+            <div class="form-grid">
+              <label>
+                <span>Proyecto</span>
+                <select [(ngModel)]="simulationForm.projectId" (ngModelChange)="onSimulationProjectChange()">
+                  <option value="">Selecciona un proyecto</option>
+                  <option *ngFor="let item of projects" [value]="item.projectId">
+                    {{ item.name }} - {{ item.type }} - {{ item.location }}
+                  </option>
+                </select>
+              </label>
+
+              <label>
+                <span>Duracion simulada (meses)</span>
+                <input type="number" min="0.01" step="0.1" [(ngModel)]="simulationForm.simulatedDurationMonths" />
+              </label>
+
+              <label>
+                <span>Costo base simulado (COP)</span>
+                <input type="number" min="0" step="1" [(ngModel)]="simulationForm.simulatedBaseCostCop" />
+              </label>
+            </div>
+
+            <div class="actions">
+              <button type="button" (click)="runSimulation()">Ejecutar simulacion</button>
+            </div>
+          </div>
+
+          <div class="simulation-grid" *ngIf="simulationResult as simulation">
+            <article class="chart-card">
+              <h3>Escenario original</h3>
+              <div class="detail-grid">
+                <div *ngFor="let metric of simulation.metrics">
+                  <span>{{ metric.label }}</span>
+                  <strong>{{ formatMetricValue(metric.label, metric.originalValue) }}</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="chart-card">
+              <h3>Escenario simulado</h3>
+              <div class="detail-grid">
+                <div *ngFor="let metric of simulation.metrics">
+                  <span>{{ metric.label }}</span>
+                  <strong>{{ formatMetricValue(metric.label, metric.simulatedValue) }}</strong>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="chart-card" *ngIf="simulationResult as simulation">
+            <h3>Diferencias</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Metrica</th>
+                  <th>Diferencia absoluta</th>
+                  <th>Diferencia porcentual</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let metric of simulation.metrics">
+                  <td>{{ metric.label }}</td>
+                  <td>{{ formatMetricValue(metric.label, metric.absoluteDifference) }}</td>
+                  <td>{{ simulationMetricPercentage(metric.originalValue, metric.simulatedValue) | number:'1.2-2' }}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Grafica de comparacion</h3>
+          <ng-container *ngIf="simulationResult as simulation; else simulationEmpty">
+            <div class="comparison-chart-header">
+              <div>
+                <span>Comparacion por metrica</span>
+                <h4>{{ simulation.projectName }}</h4>
+              </div>
+              <strong [class.positive]="simulationTotalCostPercentage(simulation) > 0" [class.negative]="simulationTotalCostPercentage(simulation) < 0">
+                Costo total {{ simulationTotalCostPercentage(simulation) | number:'1.2-2' }}%
+              </strong>
+            </div>
+            <div class="simulation-bars" role="img" aria-label="Grafica de barras comparando escenario original y simulado">
+              <article *ngFor="let metric of simulation.metrics">
+                <div class="simulation-bar-heading">
+                  <span>{{ metric.label }}</span>
+                  <strong [class.positive]="simulationMetricPercentage(metric.originalValue, metric.simulatedValue) > 0" [class.negative]="simulationMetricPercentage(metric.originalValue, metric.simulatedValue) < 0">
+                    {{ simulationMetricPercentage(metric.originalValue, metric.simulatedValue) | number:'1.2-2' }}%
+                  </strong>
+                </div>
+                <div class="simulation-bar-row">
+                  <span>Original</span>
+                  <progress [value]="simulationMetricBarWidth(metric.originalValue, metric.simulatedValue, 'original')" max="100"></progress>
+                  <strong>{{ formatMetricValue(metric.label, metric.originalValue) }}</strong>
+                </div>
+                <div class="simulation-bar-row">
+                  <span>Simulado</span>
+                  <progress [value]="simulationMetricBarWidth(metric.originalValue, metric.simulatedValue, 'simulated')" max="100"></progress>
+                  <strong>{{ formatMetricValue(metric.label, metric.simulatedValue) }}</strong>
+                </div>
+              </article>
+            </div>
+          </ng-container>
+          <ng-template #simulationEmpty>
+            <div class="empty-state">Ejecuta una simulacion para ver la comparacion grafica.</div>
+          </ng-template>
         </div>
       </div>
     </section>
@@ -613,6 +797,42 @@
           <div class="empty-state" *ngIf="projects.length === 0">
             Aun no hay proyectos registrados.
           </div>
+        </div>
+      </div>
+
+      <div class="chart-card" style="margin-bottom: 24px;" *ngIf="activeSection === 'historial'">
+        <h3>Proyectos Similares (Top 5)</h3>
+        <p style="color: var(--muted-text); font-size: 0.9rem; margin-top: -10px; margin-bottom: 16px;">
+          Comparación histórica basada en costo base, duración, área, ubicación y tipo.
+        </p>
+        <div class="empty-state" *ngIf="!selectedProject">
+          Selecciona un proyecto para ver similares.
+        </div>
+        <div class="empty-state" *ngIf="selectedProject && similarProjects.length === 0 && !loadingSimilar">
+          No hay suficientes proyectos registrados para comparar.
+        </div>
+        <div class="empty-state" *ngIf="loadingSimilar">
+          Buscando proyectos similares...
+        </div>
+        <div class="cards" *ngIf="selectedProject && similarProjects.length > 0 && !loadingSimilar">
+          <article *ngFor="let sim of similarProjects">
+            <p>{{ sim.projectName }} ({{ sim.type }} / {{ sim.location }})</p>
+            <h3 style="margin: 8px 0; font-size: 1.4rem;">Similitud: {{ sim.similarityPercentage | number:'1.0-1' }}%</h3>
+            <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 12px;">
+              <div>
+                <strong>Costo:</strong> {{ formatCop(sim.baseCostCop) }}
+                <span [class.negative]="sim.costDifferencePercentage > 0" [class.positive]="sim.costDifferencePercentage <= 0" style="margin-left: 8px; font-weight: bold; font-size: 0.85rem;">
+                  ({{ sim.costDifferencePercentage > 0 ? '+' : '' }}{{ sim.costDifferencePercentage | number:'1.0-1' }}%)
+                </span>
+              </div>
+              <div>
+                <strong>Duración:</strong> {{ sim.durationMonths }} meses
+                <span [class.negative]="sim.durationDifferencePercentage > 0" [class.positive]="sim.durationDifferencePercentage <= 0" style="margin-left: 8px; font-weight: bold; font-size: 0.85rem;">
+                  ({{ sim.durationDifferencePercentage > 0 ? '+' : '' }}{{ sim.durationDifferencePercentage | number:'1.0-1' }}%)
+                </span>
+              </div>
+            </div>
+          </article>
         </div>
       </div>
 
