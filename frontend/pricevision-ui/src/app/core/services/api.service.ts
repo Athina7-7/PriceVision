@@ -308,6 +308,22 @@ export class ApiService {
     return this.http.get<FinancialPredictionSummaryResponse[]>(`${environment.apiBaseUrl}/financial-predictions?take=${take}`, this.options);
   }
 
+  getFinancialPredictionHistory(filter?: {
+    startDate?: string;
+    endDate?: string;
+    projectId?: string;
+  }): Observable<FinancialPredictionSummaryResponse[]> {
+    const params = new URLSearchParams();
+    if (filter?.startDate) params.append('startDate', filter.startDate);
+    if (filter?.endDate) params.append('endDate', filter.endDate);
+    if (filter?.projectId) params.append('projectId', filter.projectId);
+    const qs = params.toString();
+    return this.http.get<FinancialPredictionSummaryResponse[]>(
+      `${environment.apiBaseUrl}/financial-predictions/history${qs ? `?${qs}` : ''}`,
+      this.options
+    );
+  }
+
   calculateEvm(projectId: string, periodDateUtc?: string): Observable<EvmCalculationResponse> {
     return this.http.post<EvmCalculationResponse>(`${environment.apiBaseUrl}/evm/calculate`, {
       projectId,

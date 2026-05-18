@@ -9,11 +9,14 @@
     </div>
 
     <nav>
-      <button type="button" [class.active]="activeSection === 'registro'" (click)="activeSection = 'registro'">Registrar proyecto</button>
-      <button type="button" [class.active]="activeSection === 'prediccion'" (click)="activeSection = 'prediccion'">Predicciones</button>
-      <button type="button" [class.active]="activeSection === 'simulacion'" (click)="activeSection = 'simulacion'">Simulacion</button>
-      <button type="button" [class.active]="activeSection === 'evm'" (click)="activeSection = 'evm'">EVM</button>
-      <button type="button" [class.active]="activeSection === 'historial'" (click)="activeSection = 'historial'">Historial</button>
+      <button type="button" [class.active]="activeSection === 'login'" (click)="activeSection = 'login'">
+        {{ isAuthenticated ? 'Cuenta' : 'Iniciar sesion' }}
+      </button>
+      <button type="button" [class.active]="activeSection === 'registro'" [disabled]="!isAuthenticated" (click)="activeSection = 'registro'">Registrar proyecto</button>
+      <button type="button" [class.active]="activeSection === 'prediccion'" [disabled]="!isAuthenticated" (click)="activeSection = 'prediccion'">Predicciones</button>
+      <button type="button" [class.active]="activeSection === 'simulacion'" [disabled]="!isAuthenticated" (click)="activeSection = 'simulacion'">Simulacion</button>
+      <button type="button" [class.active]="activeSection === 'evm'" [disabled]="!isAuthenticated" (click)="activeSection = 'evm'">EVM</button>
+      <button type="button" [class.active]="activeSection === 'historial'" [disabled]="!isAuthenticated" (click)="activeSection = 'historial'">Historial</button>
     </nav>
   </aside>
 
@@ -44,13 +47,51 @@
       <div *ngFor="let item of validationErrors">{{ item }}</div>
     </section>
 
+    <section *ngIf="activeSection === 'login'" class="panel">
+      <div class="status" *ngIf="!isAuthenticated">
+        Inicia sesion para poder registrar proyectos y usar predicciones/EVM.
+      </div>
+
+      <div class="form-card" *ngIf="!isAuthenticated">
+        <div class="form-grid">
+          <label>
+            <span>Usuario</span>
+            <input type="text" [(ngModel)]="loginForm.username" />
+          </label>
+          <label>
+            <span>Contrasena</span>
+            <input type="password" [(ngModel)]="loginForm.password" />
+          </label>
+        </div>
+        <div class="actions">
+          <button type="button" (click)="login()">Iniciar sesion</button>
+        </div>
+        <div class="status">
+          <strong>Usuarios de prueba:</strong> pm / Pm123! (ProjectManager) o admin / Admin123!
+        </div>
+      </div>
+
+      <div class="form-card" *ngIf="isAuthenticated">
+        <div class="status">
+          Sesion iniciada como <strong>{{ currentUserRole }}</strong>.
+        </div>
+        <div class="actions">
+          <button type="button" class="secondary" (click)="logout()">Cerrar sesion</button>
+        </div>
+      </div>
+    </section>
+
     <section *ngIf="activeSection === 'registro'" class="panel">
       <div class="status">
         <strong>Paso 1:</strong>
         Registra el proyecto con su nombre y datos base. Aqui no se aplican modelos; solo se guarda el proyecto para usarlo luego en predicciones y EVM.
       </div>
 
-      <div class="form-card">
+      <div class="status error" *ngIf="!isAuthenticated">
+        Debes iniciar sesion para registrar un proyecto.
+      </div>
+
+      <div class="form-card" *ngIf="isAuthenticated">
         <div class="form-grid">
           <label>
             <span>Nombre del proyecto</span>

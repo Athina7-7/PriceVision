@@ -20,7 +20,6 @@ builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddSingleton<ProjectPdfReportGenerator>();
 builder.Services.AddSingleton<ProjectExcelReportGenerator>();
-builder.Services.AddScoped<IFinancialForecastService, PriceVision.Application.Services.FinancialForecastService>();
 
 // JWT Auth Configuration
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -222,10 +221,10 @@ app.MapGet("/api/projects/{projectId:guid}/similar", async (
         decimal typeScore = target.Type.Equals(candidate.Type, StringComparison.OrdinalIgnoreCase) ? 1m : 0m;
         decimal locationScore = target.Location.Equals(candidate.Location, StringComparison.OrdinalIgnoreCase) ? 1m : 0m;
 
-        decimal areaMax = Math.Max(target.AreaM2, Math.Max(candidate.AreaM2, 1f));
+        float areaMax = Math.Max(target.AreaM2, Math.Max(candidate.AreaM2, 1f));
         decimal areaScore = 1m - (decimal)(Math.Abs(target.AreaM2 - candidate.AreaM2) / areaMax);
 
-        decimal durationMax = Math.Max(target.DurationMonths, Math.Max(candidate.DurationMonths, 1f));
+        float durationMax = Math.Max(target.DurationMonths, Math.Max(candidate.DurationMonths, 1f));
         decimal durationScore = 1m - (decimal)(Math.Abs(target.DurationMonths - candidate.DurationMonths) / durationMax);
 
         decimal costMax = Math.Max(target.BaseCostCop, Math.Max(candidate.BaseCostCop, 1m));
@@ -1020,4 +1019,34 @@ app.MapGet("/api/evm/records/{recordId:guid}/excel", async (
     var evmHistory = await evmRepository.GetByProjectIdAsync(project.Id, 24, cancellationToken);
 
     var excel = await Task.Run(() => excelGenerator.GenerateEvmReport(project, record, predictions, financialPrediction, evmHistory));
-    var fileName = ProjectReportFileNameBuilder
+    var fileName = ProjectReportFileNameBuilder.BuildExcel(project.Location, project.Name);
+
+    return Results.File(excel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+})
+.WithName("DownloadEvmExcel")
+.RequireAuthorization();
+
+app.Run();
+
+static string BuildPredictionHistorySummary(Prediction prediction)
+{
+    var parts = new List<string>();
+
+    if (prediction.PredictedMaterials)
+    {
+        parts.Add($"Materiales {prediction.EstimatedMaterialQuantity:N2}");
+        parts.Add($"costo estimado {prediction.EstimatedMaterialCostCop:N0} COP");
+    }
+
+    if (prediction.PredictedLabor)
+    {
+        parts.Add($"mano de obra {prediction.RequiredLaborHours:N2} horas-persona");
+    }
+
+    return parts.Count > 0 ? string.Join(", ", parts) : "Prediccion registrada";
+}
+
+public sealed record TrainModelRequest(int Rows);
+public sealed record CalculateEvmRequest(
+    Guid ProjectId,
+    DateTime? PeriodDateUtc);

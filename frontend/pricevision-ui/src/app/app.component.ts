@@ -172,6 +172,14 @@ export class AppComponent implements OnInit {
   }
 
   registerProject(): void {
+    const token = isPlatformBrowser(this.platformId) ? localStorage.getItem('jwt_token') : null;
+    if (!token) {
+      this.error = 'Debes iniciar sesion para registrar un proyecto.';
+      this.success = '';
+      this.activeSection = 'login';
+      return;
+    }
+
     this.validationErrors = this.validateProjectForm();
     if (this.validationErrors.length > 0) {
       this.error = '';
@@ -216,6 +224,15 @@ export class AppComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        if (err?.status === 401) {
+          localStorage.removeItem('jwt_token');
+          localStorage.removeItem('user_role');
+          this.isAuthenticated = false;
+          this.currentUserRole = '';
+          this.activeSection = 'login';
+          this.error = 'Sesion expirada o no autorizada. Inicia sesion de nuevo.';
+          return;
+        }
         this.error = err?.error?.error ?? 'No fue posible registrar el proyecto.';
       }
     });
@@ -474,13 +491,11 @@ export class AppComponent implements OnInit {
       }
     }
 
-    let url = '/api/financial-predictions/history?';
-    const params = new URLSearchParams();
-    if (this.historyFilter.startDate) params.append('startDate', this.historyFilter.startDate);
-    if (this.historyFilter.endDate) params.append('endDate', this.historyFilter.endDate);
-    if (this.historyFilter.projectId) params.append('projectId', this.historyFilter.projectId);
-
-    this.http.get<FinancialPredictionSummaryResponse[]>(url + params.toString()).subscribe({
+    this.apiService.getFinancialPredictionHistory({
+      startDate: this.historyFilter.startDate || undefined,
+      endDate: this.historyFilter.endDate || undefined,
+      projectId: this.historyFilter.projectId || undefined
+    }).subscribe({
       next: (items) => {
         this.financialHistory = items;
         this.loading = false;
