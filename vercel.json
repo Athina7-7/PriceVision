@@ -1,4 +1,4 @@
 {
   "buildCommand": "cd frontend/pricevision-ui && npm install && npm run build -- --configuration production",
-  "outputDirectory": "frontend/pricevision-ui/dist/pricevision-ui"
+  "outputDirectory": "frontend/pricevision-ui/dist/pricevision-ui/browser"
 }

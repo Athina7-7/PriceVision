@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm install && npm run build -- --configuration production",
-  "outputDirectory": "dist/pricevision-ui",
+  "outputDirectory": "dist/pricevision-ui/browser",
   "framework": "angular",
   "regions": ["iad1"]
 }
