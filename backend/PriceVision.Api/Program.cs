@@ -124,6 +124,7 @@ using (var scope = app.Services.CreateScope())
     await conn.CloseAsync();
 }
 
+app.UseRouting();
 app.UseCors(corsPolicyName);
 app.UseHttpsRedirection();
 app.UseAuthentication();
