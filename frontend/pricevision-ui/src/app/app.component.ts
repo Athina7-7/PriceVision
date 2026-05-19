@@ -3,6 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
+import { environment } from '../environments/environment';
 import {
   ApiService,
   CreateProjectResponse,
@@ -68,7 +69,7 @@ export class AppComponent implements OnInit {
   downloadingEvmExcelId = '';
   showPredictionChart = false;
   showEvmChart = false;
-  
+
   historyFilter = {
     startDate: '',
     endDate: '',
@@ -132,7 +133,7 @@ export class AppComponent implements OnInit {
   login(): void {
     this.loading = true;
     this.error = '';
-    this.http.post<any>('/api/auth/login', this.loginForm).subscribe({
+    this.http.post<any>(`${environment.apiBaseUrl}/auth/login`, this.loginForm).subscribe({
       next: (res) => {
         localStorage.setItem('jwt_token', res.token);
         localStorage.setItem('user_role', res.role);
