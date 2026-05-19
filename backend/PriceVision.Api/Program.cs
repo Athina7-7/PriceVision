@@ -45,7 +45,7 @@ builder.Services.AddAuthorization(options => {
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 var corsPolicyName = "AllowFrontend";
-var defaultOrigins = "http://localhost:4200,https://localhost:4200,https://pricevision-frontend-izfmuqtfm-athinas-projects-bacc068b.vercel.app";
+var defaultOrigins = "http://localhost:4200,https://localhost:4200";
 var allowedOrigins = builder.Configuration["AllowedOrigins"] ?? defaultOrigins;
 var originList = allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
@@ -53,9 +53,25 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(corsPolicyName, policy =>
     {
-        policy.WithOrigins(originList)
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.SetIsOriginAllowed(origin =>
+            {
+                if (string.IsNullOrWhiteSpace(origin)) return false;
+
+                if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
+
+                // Always allow explicit origins from config (comma-separated).
+                if (originList.Any(o => string.Equals(o, origin, StringComparison.OrdinalIgnoreCase)))
+                    return true;
+
+                // Allow any Vercel preview/prod domain (e.g. *.vercel.app).
+                if (string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase) &&
+                    uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                return false;
+            })
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
