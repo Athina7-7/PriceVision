@@ -45,11 +45,14 @@ builder.Services.AddAuthorization(options => {
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 var corsPolicyName = "AllowFrontend";
+var allowedOrigins = builder.Configuration["AllowedOrigins"] ?? "http://localhost:4200,https://localhost:4200";
+var originList = allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(corsPolicyName, policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+        policy.WithOrigins(originList)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
