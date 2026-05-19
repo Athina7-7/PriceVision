@@ -262,6 +262,57 @@ URL esperada:
 
 El frontend usa proxy hacia el backend.
 
+## Despliegue
+
+### Despliegue local de prueba
+1. Asegúrate de tener instalados:
+   - .NET SDK 10
+   - Node.js y npm
+2. Desde la raíz del repositorio, restaura y ejecuta el backend:
+
+```powershell
+dotnet restore backend\PriceVision.Api\PriceVision.Api.csproj
+dotnet run --project backend\PriceVision.Api\PriceVision.Api.csproj --launch-profile http
+```
+
+3. En otra terminal, instala y ejecuta el frontend:
+
+```powershell
+cd frontend\pricevision-ui
+npm install
+npm start
+```
+
+4. Abre el navegador en `http://localhost:4200` y verifica que el backend responda en `http://localhost:5054/api/health`.
+
+### Preparar el backend para producción
+1. Publica el proyecto API:
+
+```powershell
+dotnet publish backend\PriceVision.Api\PriceVision.Api.csproj -c Release -o backend\PriceVision.Api\publish
+```
+
+2. Copia los archivos generados en `backend\PriceVision.Api\publish` al servidor o servicio donde alojarás la API.
+3. Asegúrate de incluir la base de datos SQLite `backend\PriceVision.Api\pricevision.db` y la carpeta `backend\PriceVision.Api\Artifacts` si el backend los necesita en tiempo de ejecución.
+4. Ejecuta el binario publicado o configura el servicio de hosting para arrancar la aplicación.
+
+### Preparar el frontend para producción
+1. Desde `frontend\pricevision-ui`, construye la aplicación Angular:
+
+```powershell
+cd frontend\pricevision-ui
+npm install
+npm run build -- --configuration production
+```
+
+2. El sitio público estará en `frontend\pricevision-ui\dist\pricevision-ui`.
+3. Sube esa carpeta a un hosting estático (por ejemplo, Azure Static Web Apps, Netlify, Vercel o un servidor estático propio).
+
+### Conectar frontend y backend en la nube
+1. En el hosting del frontend, configura el endpoint del backend público.
+2. Si usas un proxy o CORS, asegúrate de permitir el dominio del frontend en el backend.
+3. Valida que ambos servicios estén accesibles desde internet y que la aplicación Angular llame correctamente a la API.
+
 ## Flujo recomendado de prueba
 
 ### 1. Registrar proyecto
