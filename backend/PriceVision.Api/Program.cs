@@ -45,7 +45,8 @@ builder.Services.AddAuthorization(options => {
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 var corsPolicyName = "AllowFrontend";
-var allowedOrigins = builder.Configuration["AllowedOrigins"] ?? "http://localhost:4200,https://localhost:4200";
+var defaultOrigins = "http://localhost:4200,https://localhost:4200,https://pricevision-frontend-izfmuqtfm-athinas-projects-bacc068b.vercel.app";
+var allowedOrigins = builder.Configuration["AllowedOrigins"] ?? defaultOrigins;
 var originList = allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 builder.Services.AddCors(options =>
